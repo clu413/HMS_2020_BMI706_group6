@@ -1,0 +1,62 @@
+---
+title: "covid_tracking_analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Add libraries
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Read and clean data
+
+```{r}
+# convert date into factor
+dat$date <- as.factor(dat$date)
+```
+
+# Analysis
+
+Customize the variables if necessary
+
+## Group analysis
+
+```{r}
+dat.group <- dat %>% group_by(date) %>% summarize(ventilator=sum(onVentilatorCurrently, na.rm=T),
+          icu=sum(inIcuCurrently, na.rm=T),
+          hospital=sum(hospitalizedCurrently, na.rm=T))
+```
+
+## Number of rows
+
+```{r}
+nrow(dat[is.na(dat$totalTestResultsIncrease),])
+```
+
+## Plots
+
+Number of rows for each dat
+
+```{r}
+ggplot(dat) + geom_bar(aes(date)) + ggtitle('The number of rows for each date') + xlab('Date') + ylab('Count') +
+  # coord_flip()
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+ICU/hospitalized/ventilator comparison
+
+```{r}
+ggplot(dat.group) + geom_line(aes(x=date, y=ventilator, group=1, color='On Ventilator')) +
+  geom_line(aes(x=date, y=icu, group=1, color='In ICU')) +
+  geom_line(aes(x=date, y=hospital, group=1, color='Hospitalized')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The number of patients hospitalized, in ICU, and on ventilator daily') +
+  xlab('Date') + ylab('The number of patients') +
+  labs(color='') 
+```
