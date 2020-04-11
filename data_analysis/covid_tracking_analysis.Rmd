@@ -12,13 +12,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(lubridate)
 ```
 
 # Read and clean data
 
-```{r}
+```{r Read Data, include=FALSE}
 # convert date into factor
+dat <- read_csv("../covid_tracking_history.csv")
 dat$date <- as.factor(dat$date)
+
+school_closure_data <- read_csv("../coronavirus-school-closures-data-4-7-2020.csv")
+school_closure_data$StateClosureStartDate <- as.Date(school_closure_data$StateClosureStartDate, format = '%m/%d/%Y')
+
 ```
 
 # Analysis
@@ -27,7 +33,7 @@ Customize the variables if necessary
 
 ## Group analysis
 
-```{r}
+```{r Group analysis, include=FALSE}
 dat.group <- dat %>% group_by(date) %>% summarize(ventilator=sum(onVentilatorCurrently, na.rm=T),
           icu=sum(inIcuCurrently, na.rm=T),
           hospital=sum(hospitalizedCurrently, na.rm=T))
@@ -35,7 +41,7 @@ dat.group <- dat %>% group_by(date) %>% summarize(ventilator=sum(onVentilatorCur
 
 ## Number of rows
 
-```{r}
+```{r Number of Rows, eval=FALSE}
 nrow(dat[is.na(dat$totalTestResultsIncrease),])
 ```
 
@@ -60,3 +66,5 @@ ggplot(dat.group) + geom_line(aes(x=date, y=ventilator, group=1, color='On Venti
   xlab('Date') + ylab('The number of patients') +
   labs(color='') 
 ```
+
+Number

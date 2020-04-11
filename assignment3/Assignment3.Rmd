@@ -1,0 +1,106 @@
+---
+title: "Group 6 Assignment 3"
+author: "Jonathan Levin"
+date: "4/11/2020"
+output: html_document
+---
+
+```{r load, include = FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+```
+
+```{r Read Data, include=FALSE}
+# convert date into factor
+dat <- read_csv("../covid_tracking_history.csv")
+dat$date <- as.factor(dat$date)
+
+school_closure_data <- read_csv("../coronavirus-school-closures-data-4-7-2020.csv")
+school_closure_data$StateClosureStartDate <- as.Date(school_closure_data$StateClosureStartDate, format = '%m/%d/%Y')
+
+```
+
+
+```{r Group analysis, include=FALSE}
+dat.group <- dat %>% group_by(date) %>% summarize(Tests = sum(totalTestResults, na.rm = T),
+          Cases = sum(positive, na.rm =T),
+          Hospitalizations = sum(hospitalized, na.rm = T),
+          newTests = sum(totalTestResultsIncrease, na.rm = T),
+          newCases = sum(positiveIncrease, na.rm =T),
+          newHospitalizations = sum(hospitalizedIncrease, na.rm = T))
+
+```
+
+
+
+## Group 6 - Assignment 3
+Group Members: Iris Braunstein, Jonathan Levin, Chenyue Lu, Kathleen Sucipto, Dany Thorpe
+
+### Part 1: Exploratory Analysis.
+We are using two data sets: 
+A. the States Historical Data in this COVID Tracking Project. Link:   
+https://covidtracking.com/api, combined with  
+B. The days state-wide school closure are enforced. Link: 
+https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.htm  
+  
+#### A. COVID Tracking Project
+This data could be used to explore the number of positive tests, number of negative tests, pending tests, hospitalizations per state over time. In theory there is ICU and ventilator data but there is a lot of missing data.  
+
+This information could be used to graph # over time, for example:  
+
+```{r echo = FALSE}
+ggplot(dat.group) + geom_line(aes(x=date, y=Hospitalizations, group=1, color='Hospitalized')) +
+  geom_line(aes(x=date, y=Cases, group=1, color='Cases')) +
+  geom_line(aes(x=date, y=Tests, group=1, color='Tests')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cummulative number of tests, cases, and hospitalized patients daily') +
+  xlab('Date') + ylab('The number of patients') +
+  labs(color='') 
+```
+
+This could also be used graph the RATE of change over time (i.e. daily positive rate), for example:  
+
+```{r echo = FALSE}
+ggplot(dat.group) + geom_line(aes(x=date, y=newHospitalizations, group=1, color='Newly Hospitalized')) +
+  geom_line(aes(x=date, y=newCases, group=1, color='New Cases')) +
+  geom_line(aes(x=date, y=newTests, group=1, color='New Tests')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cummulative number of new tests, cases, and hospitalized patients daily') +
+  xlab('Date') + ylab('The number of new patients') +
+  labs(color='') 
+```
+
+The latter analysis is a proxy measure for the value of R0 (number of people who catch a disease from one contagious person).
+
+
+#### B. School closure data set
+This data can be used to determine the date of mandated school closure per date, for example:
+```{r echo = FALSE}
+ggplot(subset(school_closure_data, !is.na(StateClosureStartDate))) + geom_histogram(aes(x =StateClosureStartDate )) + ggtitle('School Closures by Date')
+
+```
+
+
+And could also be used to look at the number of individuals affected per state by the closing (or state population could be added to make a proportion):
+```{r echo = FALSE}
+ggplot(subset(school_closure_data, !is.na(StateClosureStartDate))) + geom_col(aes(x =StateClosureStartDate, y =  StatePublicSchoolEnrollment)) + ggtitle('Students affected by closures by Date') + ylab("Number of enrolled Students")
+
+```
+
+#### Combining data
+By combining the two data sets, one could derive the following information:  
+- How timing of school closures affected rate of new cases overall and by state  
+- Comparing 'R0' or the positive case rate before an after a policy intervnetion like school closures  
+- The 'incubation time' in between a policy intervention like school closures and when there is an effect in #cases or hospitalizations  
+- How states' testing capacity correlated with school closure policies
+
+### Part 2: Identify target audience
+The target audience will be school policy makers who decide when to implement school closures and for how long. This could also be used by public health researchers and the general public for consumption
+
+### Part 3: Visualization tasks
+Our visualization tasks will be:  
+- Graphical display when school closures occurred across the US  
+- Overall positive case rate and hospitlization rate in the US CENTERED around school closure date  
+- Visual interaction looking at the impact of virus incubation time with regards to delays in the effect of a policy like school closing  
+- State by state evaluation looking at timing of school closures, testing availability, positive test rate, # case rate, and hospitalization rate  
