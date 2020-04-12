@@ -30,6 +30,13 @@ dat.group <- dat %>% group_by(date) %>% summarize(Tests = sum(totalTestResults, 
           newCases = sum(positiveIncrease, na.rm =T),
           newHospitalizations = sum(hospitalizedIncrease, na.rm = T))
 
+dat.group.state <- dat %>% group_by(date, state) %>% summarize(Tests = sum(totalTestResults, na.rm = T),
+          Cases = sum(positive, na.rm =T),
+          Hospitalizations = sum(hospitalized, na.rm = T),
+          newTests = sum(totalTestResultsIncrease, na.rm = T),
+          newCases = sum(positiveIncrease, na.rm =T),
+          newHospitalizations = sum(hospitalizedIncrease, na.rm = T))
+
 ```
 
 
@@ -57,6 +64,14 @@ ggplot(dat.group) + geom_line(aes(x=date, y=Hospitalizations, group=1, color='Ho
   ggtitle('The cummulative number of tests, cases, and hospitalized patients daily') +
   xlab('Date') + ylab('The number of patients') +
   labs(color='') 
+
+ggplot(subset(dat.group.state, !is.na(state))) + geom_line(aes(x=date, y=Hospitalizations, group=1, color='Hospitalized')) +
+  geom_line(aes(x=date, y=Cases, group=1, color='Cases')) +
+  geom_line(aes(x=date, y=Tests, group=1, color='Tests')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cummulative number of tests, cases, and hospitalized patients daily by State') +
+  xlab('Date') + ylab('The number of patients') +
+  labs(color='') + facet_wrap( ~ state, nrow = 6)
 ```
 
 This could also be used graph the RATE of change over time (i.e. daily positive rate), for example:  
@@ -69,9 +84,18 @@ ggplot(dat.group) + geom_line(aes(x=date, y=newHospitalizations, group=1, color=
   ggtitle('The cummulative number of new tests, cases, and hospitalized patients daily') +
   xlab('Date') + ylab('The number of new patients') +
   labs(color='') 
+
+ggplot(dat.group.state) + geom_line(aes(x=date, y=newHospitalizations, group=1, color='Newly Hospitalized')) +
+  geom_line(aes(x=date, y=newCases, group=1, color='New Cases')) +
+  geom_line(aes(x=date, y=newTests, group=1, color='New Tests')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cummulative number of new tests, cases, and hospitalized patients daily by State') +
+  xlab('Date') + ylab('The number of new patients') +
+  labs(color='') + facet_wrap(~ state, nrow = 6)
+```
 ```
 
-The latter analysis is a proxy measure for the value of R0 (number of people who catch a disease from one contagious person).
+The latter analysis is a proxy measure for the value of R0 (number of people who catch a disease from one contagious person). 
 
 
 #### B. School closure data set
