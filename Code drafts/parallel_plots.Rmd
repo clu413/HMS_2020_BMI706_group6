@@ -1,0 +1,145 @@
+---
+title: "706 Parallel Coordinates"
+author: 'Dany Thorpe Huerta'
+output: html_notebook
+---
+
+A warm-up:
+
+```{r}
+library(plotly)
+library(dplyr)
+```
+
+An example parallel coordinate plot to use as a template. This code is from Plotly documentation: https://plotly.com/r/parallel-coordinates-plot/
+```{r Template}
+df <- read.csv("https://raw.githubusercontent.com/bcdunbar/datasets/master/parcoords_data.csv")
+
+fig <- df %>%
+  plot_ly(width = 1000, height = 600) 
+fig <- fig %>% add_trace(type = 'parcoords',
+          line = list(color = ~colorVal,
+                      colorscale = 'Jet',
+                      showscale = TRUE,
+                      reversescale = TRUE,
+                      cmin = -4000,
+                      cmax = -100),
+          dimensions = list(
+            list(range = c(~min(blockHeight),~max(blockHeight)),
+                 constraintrange = c(100000,150000),
+                 label = 'Block Height', values = ~blockHeight),
+            list(range = c(~min(blockWidth),~max(blockWidth)),
+                 label = 'Block Width', values = ~blockWidth),
+            list(tickvals = c(0,0.5,1,2,3),
+                 ticktext = c('A','AB','B','Y','Z'),
+                 label = 'Cyclinder Material', values = ~cycMaterial),
+            list(range = c(-1,4),
+                 tickvals = c(0,1,2,3),
+                 label = 'Block Material', values = ~blockMaterial),
+            list(range = c(~min(totalWeight),~max(totalWeight)),
+                 visible = TRUE,
+                 label = 'Total Weight', values = ~totalWeight),
+            list(range = c(~min(assemblyPW),~max(assemblyPW)),
+                 label = 'Assembly Penalty Weight', values = ~assemblyPW),
+            list(range = c(~min(HstW),~max(HstW)),
+                 label = 'Height st Width', values = ~HstW),
+            list(range = c(~min(minHW),~max(minHW)),
+                 label = 'Min Height Width', values = ~minHW),
+            list(range = c(~min(minWD),~max(minWD)),
+                 label = 'Min Width Diameter', values = ~minWD),
+            list(range = c(~min(rfBlock),~max(rfBlock)),
+                 label = 'RF Block', values = ~rfBlock)
+            )
+          )
+
+
+fig
+```
+
+On to our code. Merge the two datasets and join them on the state abbreviation.
+```{r Read Data, include=FALSE}
+dat <- read.csv("../covid_tracking_history.csv")
+dat$date <- as.factor(dat$date)
+
+dat <- dat %>% full_join(., read.csv("../coronavirus-school-closures-data-4-7-2020.csv"), by = c('state' = 'StateAbbreviation'))
+dat$StateClosureStartDate <- as.Date(dat$StateClosureStartDate, format = '%m/%d/%Y')
+
+```
+
+Define the regions based on CDC standards:
+```{r Region Defintion}
+#define regions based on CDC standards (https://www.cdc.gov/coronavirus/2019-ncov/covid-data/covidview/04102020/labs-regions.html)
+
+R1 <- c('CT', 'ME', 'MA', 'NH', 'RI', 'VT')
+R2 <- c('NJ', 'NY', 'PR')
+R3 <- c('DE', 'DC', 'MD', 'PA', 'VA', 'WV')
+R4 <- c('AL', 'FL', 'GA', 'KY', 'MS', 'NC', 'SC', 'TN')
+R5 <- c('IL', 'IN', 'MI','MN','OH','WI')
+R6 <- c('AR','LA','NM','OK','TX')
+R7 <- c('IA', 'KS', 'MO', 'NE')
+R8 <- c('CO', 'MT', 'ND','SD','UT','WY')
+R9 <- c('AZ', 'CA', 'GU', 'HI','NV')
+R10 <- c('AK','ID','OR','WA')
+
+#put as character so that all states/territories have a value and all values of same type of vector
+dat %>% mutate(region = (
+  case_when(state %in% R1 ~ '1',
+            state %in% R2 ~ '2',
+            state %in% R3 ~ '3',
+            state %in% R4 ~ '4',
+            state %in% R5 ~ '5',
+            state %in% R6 ~ '6',
+            state %in% R7 ~ '7',
+            state %in% R8 ~ '8',
+            state %in% R9 ~ '9',
+            state %in% R10 ~ '10', 
+            TRUE ~ 'Other')
+))
+```
+
+
+```{r PCA Attempt, eval = F}
+#Reference Documentation : https://plotly.com/r/reference/#parcoords
+
+#DO NOT RUN YET. have not updated completely
+fig <- dat %>%
+  plot_ly(width = 1000, height = 600) 
+fig <- fig %>% add_trace(type = 'parcoords',
+          line = list(color = ~colorVal,
+                      colorscale = 'Jet',
+                      showscale = TRUE,
+                      reversescale = TRUE,
+                      cmin = -4000,
+                      cmax = -100),
+          dimensions = list(
+            list(range = c(~min(blockHeight),~max(blockHeight)),
+                 constraintrange = c(100000,150000),
+                 label = 'Block Height', values = ~blockHeight),
+            list(range = c(~min(blockWidth),~max(blockWidth)),
+                 label = 'Block Width', values = ~blockWidth),
+            list(tickvals = c(0,0.5,1,2,3),
+                 ticktext = c('A','AB','B','Y','Z'),
+                 label = 'Cyclinder Material', values = ~cycMaterial),
+            list(range = c(-1,4),
+                 tickvals = c(0,1,2,3),
+                 label = 'Block Material', values = ~blockMaterial),
+            list(range = c(~min(totalWeight),~max(totalWeight)),
+                 visible = TRUE,
+                 label = 'Total Weight', values = ~totalWeight),
+            list(range = c(~min(assemblyPW),~max(assemblyPW)),
+                 label = 'Assembly Penalty Weight', values = ~assemblyPW),
+            list(range = c(~min(HstW),~max(HstW)),
+                 label = 'Height st Width', values = ~HstW),
+            list(range = c(~min(minHW),~max(minHW)),
+                 label = 'Min Height Width', values = ~minHW),
+            list(range = c(~min(minWD),~max(minWD)),
+                 label = 'Min Width Diameter', values = ~minWD),
+            list(range = c(~min(rfBlock),~max(rfBlock)),
+                 label = 'RF Block', values = ~rfBlock)
+            )
+          )
+
+
+fig
+```
+
