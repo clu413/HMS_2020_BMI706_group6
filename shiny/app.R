@@ -8,6 +8,11 @@
 #
 
 library(shiny)
+library(plotly)
+library(tidyverse)
+
+# Load data
+dat <- read.csv('../data/merged_data.csv')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -27,7 +32,8 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("distPlot")
+           # plotOutput("distPlot")
+            plotlyOutput("heatmap")
         )
     )
 )
@@ -42,6 +48,17 @@ server <- function(input, output) {
 
         # draw the histogram with the specified number of bins
         hist(x, breaks = bins, col = 'darkgray', border = 'white')
+    })
+    
+    currmatrix <- reactive({
+        x <- input$bins
+        matrix(seq(1, 9)*input$bins, nrow=3)
+    })
+    
+    output$heatmap <- renderPlotly({
+        plot_ly(
+            z=currmatrix(), type='heatmap'
+        )
     })
 }
 
