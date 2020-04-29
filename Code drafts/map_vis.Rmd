@@ -1,0 +1,35 @@
+library(plotly)
+df <- copy(dat)
+
+# only select the columns of interest
+df <- df[c('state','date','positive','negative','recovered','death','totalTestResults','Location','Governor.Political.Affiliation','State.Senate.Majority.Political.Affiliation','State.House.Majority.Political.Affiliation','State.Attorney.General.Political.Affiliation','State.Insurance.Commissioner.Political.Affiliation','closed')]
+
+# select only the latest date
+df <- df[which(df$date==max(df$date)),]
+# turn state into factor 
+df$state <- factor(df$state)
+df$Governor.Political.Affiliation <- factor(df$Governor.Political.Affiliation)
+# info presented when hovering over that state
+df$hover <- with(df, paste(state, '<br>',positive))
+# give state boundaries a white border
+# l <- list(color = toRGB("white"), width = 2)
+
+# specify some map projection/options
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('white')
+)
+
+fig <- plot_geo(df, locationmode = 'USA-states')
+fig <- fig %>% add_trace(text = ~hover, locations = ~state,
+    color = ~Governor.Political.Affiliation
+  )
+# fig <- fig %>% colorbar(title = "positive cases")
+fig <- fig %>% layout(
+    title = paste('COVID-19 disease burden on',max(df$date)),
+    geo = g
+  )
+
+fig
