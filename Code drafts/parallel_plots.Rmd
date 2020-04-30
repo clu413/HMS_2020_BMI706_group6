@@ -4,11 +4,143 @@ author: 'Dany Thorpe Huerta'
 output: html_notebook
 ---
 
-A warm-up:
-
 ```{r}
 library(plotly)
 library(dplyr)
+```
+
+
+```{r, eval = F}
+#plotly code:
+plotlyOutput('pcp')
+
+output$pcp <- renderPlotly({
+        
+      fig <- pcdat %>% plot_ly(width = 1000, height = 600) 
+      #fig %>% 
+      pcdat<- dat[1:54,c(2,18,27, 29)] %>% subset(!is.na(dat[1:54,29]))
+      party <-dat[1:54,29] %>% subset(!is.na(dat[,29])) %>%  unique() 
+      col_names <- sapply(pcdat, is.factor)
+      pcdat[,col_names] <- sapply(pcdat[,col_names] , unclass)
+      
+      library(plotly) 
+      #options(viewer=NULL)
+      pcdat %>% plot_ly() %>% add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
+                                        dimensions = list(
+                                          list(range = c(1,50),
+                                               tickvals = c(1:50),
+                                               label = 'state',
+                                               ticktext = c(paste(dat$state)),
+                                               values = ~state ),
+                                          
+                                          list(range = c(~min(total),~max(total)),
+                                               label = 'total tests',
+                                               tickvals = c(~min(total),~max(total)),
+                                               values= ~total),
+                                          
+                                          list(range=c(1,2),
+                                               tickvals = c(1, 2),
+                                               label = 'party',
+                                               ticktext = c(paste(party)),
+                                               values = ~Governor.Political.Affiliation ),
+                                          
+                                          list(range = c(1,7),
+                                               tickvals = c(1,7),
+                                               label = 'school closure date',
+                                               ticktext = c(paste(dat$StateClosureStartDate)),
+                                               values = ~StateClosureStartDate
+                                          )
+                                        )
+                                        
+                                        
+      )
+      
+    })
+```
+
+```{r}
+  fig <- pcdat %>% plot_ly(width = 1000, height = 600) 
+      #fig %>% 
+      pcdat<- dat[1:54,c(2,18,27, 29)] %>% subset(!is.na(dat[1:54,29]))
+      party <-dat[1:54,29] %>% subset(!is.na(dat[,29])) %>%  unique() 
+      col_names <- sapply(pcdat, is.factor)
+      pcdat[,col_names] <- sapply(pcdat[,col_names] , unclass)
+      
+      library(plotly) 
+      #options(viewer=NULL)
+      pcdat %>% plot_ly() %>% add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
+                                        dimensions = list(
+                                          list(range = c(1,50),
+                                               tickvals = c(1:50),
+                                               label = 'state',
+                                               ticktext = c(paste(dat$state)),
+                                               values = ~state ),
+                                          
+                                          list(range = c(~min(total),~max(total)),
+                                               label = 'total tests',
+                                               tickvals = c(~min(total),~max(total)),
+                                               values= ~total),
+                                          
+                                          list(range=c(1,2),
+                                               tickvals = c(1, 2),
+                                               label = 'party',
+                                               ticktext = c(paste(party)),
+                                               values = ~Governor.Political.Affiliation ),
+                                          
+                                          list(range = c(1,7),
+                                               tickvals = c(1,7),
+                                               label = 'school closure date',
+                                               ticktext = c(paste(dat$StateClosureStartDate)),
+                                               values = ~StateClosureStartDate
+                                          )
+                                        )
+                                        
+                                        
+      )
+      
+```
+
+
+```{r}
+fig <- pcdat %>% plot_ly(width = 1000, height = 600) 
+#fig %>% 
+pcdat<- dat[1:54,c(2,18,27, 29)] %>% subset(!is.na(dat[1:54,29]))
+party <-dat[1:54,29] %>% subset(!is.na(dat[,29])) %>%  unique() 
+col_names <- sapply(pcdat, is.factor)
+pcdat[,col_names] <- sapply(pcdat[,col_names] , unclass)
+
+library(plotly) 
+#options(viewer=NULL)
+pcdat %>% plot_ly() %>% add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
+dimensions = list(
+  list(range = c(1,50),
+       tickvals = c(1:50),
+       label = 'state',
+       ticktext = c(paste(dat$state)),
+       values = ~state ),
+  
+  list(range = c(~min(total),~max(total)),
+       label = 'total tests',
+       tickvals = c(~min(total),~max(total)),
+       values= ~total),
+
+list(range=c(1,2),
+     tickvals = c(1, 2),
+     label = 'party',
+     ticktext = c(paste(party)),
+     values = ~Governor.Political.Affiliation ),
+
+list(range = c(1,7),
+     tickvals = c(1,7),
+     label = 'school closure date',
+     ticktext = c(paste(dat$StateClosureStartDate)),
+     values = ~StateClosureStartDate
+                  )
+     )
+                  
+                
+)
+
 ```
 
 An example parallel coordinate plot to use as a template. This code is from Plotly documentation: https://plotly.com/r/parallel-coordinates-plot/
@@ -18,12 +150,12 @@ df <- read.csv("https://raw.githubusercontent.com/bcdunbar/datasets/master/parco
 fig <- df %>%
   plot_ly(width = 1000, height = 600) 
 fig <- fig %>% add_trace(type = 'parcoords',
-          line = list(color = ~colorVal,
-                      colorscale = 'Jet',
-                      showscale = TRUE,
-                      reversescale = TRUE,
-                      cmin = -4000,
-                      cmax = -100),
+          # line = list(color = ~colorVal,
+          #             colorscale = 'Jet',
+          #             showscale = TRUE,
+          #             reversescale = TRUE,
+          #             cmin = -4000,
+          #             cmax = -100),
           dimensions = list(
             list(range = c(~min(blockHeight),~max(blockHeight)),
                  constraintrange = c(100000,150000),
@@ -54,6 +186,10 @@ fig <- fig %>% add_trace(type = 'parcoords',
 
 
 fig
+```
+
+```{r}
+head(df)
 ```
 
 On to our code. Merge the two datasets and join them on the state abbreviation.
@@ -82,7 +218,7 @@ R9 <- c('AZ', 'CA', 'GU', 'HI','NV')
 R10 <- c('AK','ID','OR','WA')
 
 #put as character so that all states/territories have a value and all values of same type of vector
-dat %>% mutate(region = (
+dat <- dat %>% mutate(region = (
   case_when(state %in% R1 ~ '1',
             state %in% R2 ~ '2',
             state %in% R3 ~ '3',
@@ -104,42 +240,68 @@ dat %>% mutate(region = (
 #DO NOT RUN YET. have not updated completely
 fig <- dat %>%
   plot_ly(width = 1000, height = 600) 
-fig <- fig %>% add_trace(type = 'parcoords',
-          line = list(color = ~colorVal,
-                      colorscale = 'Jet',
-                      showscale = TRUE,
-                      reversescale = TRUE,
-                      cmin = -4000,
-                      cmax = -100),
+fig <- fig %>% add_trace(type = 'parcoords', name = ~state,
           dimensions = list(
-            list(range = c(~min(blockHeight),~max(blockHeight)),
-                 constraintrange = c(100000,150000),
-                 label = 'Block Height', values = ~blockHeight),
-            list(range = c(~min(blockWidth),~max(blockWidth)),
-                 label = 'Block Width', values = ~blockWidth),
-            list(tickvals = c(0,0.5,1,2,3),
-                 ticktext = c('A','AB','B','Y','Z'),
-                 label = 'Cyclinder Material', values = ~cycMaterial),
-            list(range = c(-1,4),
-                 tickvals = c(0,1,2,3),
-                 label = 'Block Material', values = ~blockMaterial),
-            list(range = c(~min(totalWeight),~max(totalWeight)),
-                 visible = TRUE,
-                 label = 'Total Weight', values = ~totalWeight),
-            list(range = c(~min(assemblyPW),~max(assemblyPW)),
-                 label = 'Assembly Penalty Weight', values = ~assemblyPW),
-            list(range = c(~min(HstW),~max(HstW)),
-                 label = 'Height st Width', values = ~HstW),
-            list(range = c(~min(minHW),~max(minHW)),
-                 label = 'Min Height Width', values = ~minHW),
-            list(range = c(~min(minWD),~max(minWD)),
-                 label = 'Min Width Diameter', values = ~minWD),
-            list(range = c(~min(rfBlock),~max(rfBlock)),
-                 label = 'RF Block', values = ~rfBlock)
+            list(tickvals = c(0:50),
+                 ticktext = c(dat$state),
+                 label = 'State', values = ~state),
+            list(
+              range=c(~min(totalTestResults), ~max(totalTestResults)),
+              label = 'Total Tests',
+              values = ~totalTestResults)
+            
+            # list(range = c(~min(blockHeight),~max(blockHeight)),
+            #      constraintrange = c(100000,150000),
+            #      label = 'Block Height', values = ~blockHeight),
+            # list(range = c(~min(blockWidth),~max(blockWidth)),
+            #      label = 'Block Width', values = ~blockWidth),
+            # list(tickvals = c(0,0.5,1,2,3),
+            #      ticktext = c('A','AB','B','Y','Z'),
+            #      label = 'Cyclinder Material', values = ~cycMaterial),
+            # list(range = c(-1,4),
+            #      tickvals = c(0,1,2,3),
+            #      label = 'Block Material', values = ~blockMaterial),
+            # list(range = c(~min(totalWeight),~max(totalWeight)),
+            #      visible = TRUE,
+            #      label = 'Total Weight', values = ~totalWeight),
+            # list(range = c(~min(assemblyPW),~max(assemblyPW)),
+            #      label = 'Assembly Penalty Weight', values = ~assemblyPW),
+            # list(range = c(~min(HstW),~max(HstW)),
+            #      label = 'Height st Width', values = ~HstW),
+            # list(range = c(~min(minHW),~max(minHW)),
+            #      label = 'Min Height Width', values = ~minHW),
+            # list(range = c(~min(minWD),~max(minWD)),
+            #      label = 'Min Width Diameter', values = ~minWD),
+            # list(range = c(~min(rfBlock),~max(rfBlock)),
+            #      label = 'RF Block', values = ~rfBlock)
             )
           )
 
 
 fig
 ```
+
+GGally
+more difficult to do categorical data, but way to separate out groups, scale the data (univariately, substract mean & divide by sd)
+```{r}
+library(GGally)
+dat %>% arrange(desc(region))%>%
+   ggparcoord(
+    columns = c(18,29), groupColumn = 32
+    ) +
+    scale_color_manual(values=c( "#69b3a2", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8", "#E8E8E8") ) 
+
+ #can factor regions
+#dat %>% colnames()
+```
+
+THIS ONE!! cdparcoord
+```{r}
+library(cdparcoord)
+
+data(dat)
+pcdat<- dat[1:54,c(2,18,29,32)] %>% subset(!is.na(dat[1:54,29]))
+discparcoord(pcdat,k=150,saveCounts=FALSE)  
+```
+
 
