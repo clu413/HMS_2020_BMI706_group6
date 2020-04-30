@@ -16,15 +16,13 @@ plotlyOutput('pcp')
 
 output$pcp <- renderPlotly({
         
-      fig <- pcdat %>% plot_ly(width = 1000, height = 600) 
-      #fig %>% 
+ 
       pcdat<- dat[1:54,c(2,18,27, 29)] %>% subset(!is.na(dat[1:54,29]))
       party <-dat[1:54,29] %>% subset(!is.na(dat[,29])) %>%  unique() 
       col_names <- sapply(pcdat, is.factor)
       pcdat[,col_names] <- sapply(pcdat[,col_names] , unclass)
       
       library(plotly) 
-      #options(viewer=NULL)
       pcdat %>% plot_ly() %>% add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
                                         dimensions = list(
                                           list(range = c(1,50),
