@@ -11,54 +11,82 @@ library(shiny)
 library(plotly)
 library(tidyverse)
 
-# Load data
-dat <- read.csv('../data/merged_data.csv')
+# import functions from external files
+
+dat <- read_csv('../data/merged_data_percent_change.csv')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
+    titlePanel("What's a good title?"),
+    
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+            selectInput('category', 'Select a category:',
+                        c('Positive Increase'='positiveIncrease',
+                          'Positive % Change'='positive_percent_change',
+                          '% Positive'='percent_positive',
+                          'Hospitalized Increase'='hospitalizedIncrease',
+                          'Hospitalized % Change'='hospitalized_percent_change',
+                          'Death Increase'='deathIncrease',
+                          'Death % Change'='death_percent_change'))
         ),
-
-        # Show a plot of the generated distribution
         mainPanel(
-           # plotOutput("distPlot")
             plotlyOutput("heatmap")
         )
     )
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output) {
+    heatmapMatrix <- reactive({
+        # obtain 30 timestamps after school closure (including school closure date)
+        heatmap.width <- 30
+        cat <- input$category
+        states <- unique(dat$state)
+        mat <- matrix(rep(NA, length(states)*heatmap.width), nrow=length(states))
+        for (i in 1:length(states)) {
+            state <- states[i]
+            # filter by state
+            df <- dat[dat$state == state & dat$name == cat,]
+            closure_date <- df$StateClosureStartDate[1] - 10
+            df <- df %>%
+                filter(date >= closure_date) %>%
+                arrange(date)
+            mat[i,] <- df$value[1:heatmap.width]
+        }
+        rownames(mat) <- states
 
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
-    })
-    
-    currmatrix <- reactive({
-        x <- input$bins
-        matrix(seq(1, 9)*input$bins, nrow=3)
+        return(mat)
     })
     
     output$heatmap <- renderPlotly({
+        mat <- heatmapMatrix()
         plot_ly(
-            z=currmatrix(), type='heatmap'
-        )
+            y=rownames(mat),
+            x=seq(1,30),
+            z=mat, type='heatmap',
+            height=800,
+        ) %>%
+            layout(
+                xaxis=list(
+                    title='Days',
+                    dtick=1,
+                    zeroline=F,
+                    showline=F,
+                    showticklabels=T,
+                    showgrid=T
+                ),
+                yaxis=list(
+                    title='States',
+                    dtick=1,
+                    zeroline=F,
+                    showline=F,
+                    showticklabels=T,
+                    showgrid=T
+                )) %>%
+            add_segments(x=10, xend=10, y='AK', yend='WY')
     })
 }
 
