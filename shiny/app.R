@@ -19,37 +19,33 @@ dat.filt   <- preproc(dat.filt)
 
 #---UI---
 ui <- fluidPage(
-    # Application title
-    titlePanel('What is a good title?'),
-    
-    sidebarLayout(
-        sidebarPanel(
-            selectInput('name', 'Select a category:',
-                        c('Positive Increase'='positiveIncrease',
-                          'Positive % Change'='positive_percent_change',
-                          '% Positive'='percent_positive',
-                          'Hospitalized Increase'='hospitalizedIncrease',
-                          'Hospitalized % Change'='hospitalized_percent_change',
-                          'Death Increase'='deathIncrease',
-                          'Death % Change'='death_percent_change')),
-            pickerInput('state', 'Select a state:', 
-                        choices = unique(levels(dat.change$state)), 
-                        options = list(`actions-box` = TRUE), 
-                        selected = unique(dat.change$state), multiple = T),
-            sliderInput('innoculation',
-                        'Innoculation Time (days):',
-                        min = 1,
-                        max = 10,
-                        value = 5)
-        ),
-        mainPanel(
-            plotlyOutput('map'),
-            plotlyOutput('pcp'),
-            plotlyOutput('lineplot'),
-            plotlyOutput('heatmap'),
-        )
+  titlePanel('When did US states close their schools when the COVID pandemic hit?'),
+  
+  fluidRow(
+    column(4, sidebarPanel(
+      selectInput('name', 'Select a category:',
+                  c('Positive Increase'='positiveIncrease'
+                  )),
+      pickerInput('state', 'Select a state:', 
+                  choices = unique(levels(dat.change$state)), 
+                  options = list(`actions-box` = TRUE), 
+                  selected = unique(dat.change$state), multiple = T),
+      sliderInput('innoculation',
+                  'Innoculation Time (days):',
+                  min = 1,
+                  max = 10,
+                  value = 5),
+      width = 12
+    )),
+    column(8, plotlyOutput('pcp'))),
+  
+  fluidRow(
+    # column(4, plotlyOutput('lineplot')),
+    column(6, plotlyOutput('map')),
+    column(6, plotlyOutput('lineplot'))
     )
 )
+
 
 # Define server logic
 server <- function(input, output) {
