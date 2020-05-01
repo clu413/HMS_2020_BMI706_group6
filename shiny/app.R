@@ -74,23 +74,29 @@ server <- function(input, output) {
     
     #--Dany--
     output$pcp <- renderPlotly({
-        df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
+      
+        df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame() %>% filter(state %in% input$state)
         party <- unique(df$Governor.Political.Affiliation)
         pcdat <- df %>%
             select(state, total, StateClosureStartDate, Governor.Political.Affiliation) %>%
-            subset(!is.na(Governor.Political.Affiliation))
+            subset(!is.na(Governor.Political.Affiliation)) %>% filter(state %in% input$state)
         pcdat$StateClosureStartDate <- as.factor(pcdat$StateClosureStartDate)
+        pcdat$state <- as.factor(pcdat$state)
         factor_cols <- sapply(pcdat, is.factor)
         pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
+        pcdat$state <- as.factor(pcdat$state) %>% unclass()
         
         pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
                       dimensions = list(
-                          list(range = c(1,50),
-                               tickvals = c(1:50),
+                          list(range = c(1,length(df$state)),
+                               tickvals = c(1:length(df$state)),
                                label = 'state',
-                               ticktext = c(paste(dat.filt$state)),
+                               ticktext = c(paste(df$state)),
+                               #multiselect = TRUE,
+                               #constraintrange = list(c(1,1), c(25,25), c(49,50)),
+                               #constraintrange = c(state_restraint),
                                values = ~state ),
                           
                           list(range = c(~min(total),~max(total)),
