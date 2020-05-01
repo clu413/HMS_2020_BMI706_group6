@@ -6,7 +6,7 @@ library(ggplot2)
 library(lubridate)
 
 # Load data
-dat <- read.csv('merged_data.csv')
+dat <- read.csv('../data/merged_data.csv')
 
 # only select the columns of interest
 df <- dat[c('state','date','positive','negative','recovered','death','totalTestResults','Location','Governor.Political.Affiliation','State.Senate.Majority.Political.Affiliation','State.House.Majority.Political.Affiliation','State.Attorney.General.Political.Affiliation','State.Insurance.Commissioner.Political.Affiliation','closed')]
