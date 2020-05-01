@@ -2,6 +2,7 @@ library(shiny)
 library(shinyWidgets)
 library(plotly)
 library(tidyverse)
+library(shinyjs)
 
 #---load data---
 dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
@@ -19,6 +20,7 @@ dat.filt   <- preproc(dat.filt)
 
 #---UI---
 ui <- fluidPage(
+    
     # Application title
     titlePanel('What is a good title?'),
     
@@ -119,7 +121,15 @@ server <- function(input, output) {
                       )
                       
                       
-            )
+            ) %>% onRender("
+            function(el) {
+                $('.axis-title').click(function() {
+                    Shiny.onInputChange('name', 'percent_positive');
+                    $(this).css('fill', 'red');
+                });
+            }
+                
+            ")
         
     })
     
