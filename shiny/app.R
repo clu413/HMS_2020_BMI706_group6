@@ -3,6 +3,7 @@ library(shinyWidgets)
 library(plotly)
 library(tidyverse)
 library(lme4)
+library(shinyjs)
 
 #---load data---
 dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
@@ -25,7 +26,13 @@ ui <- fluidPage(
   fluidRow(
     column(4, sidebarPanel(
       selectInput('name', 'Select a value to display:',
-                  c('Positive Increase'='positiveIncrease'
+                  c('Positive Increase'='positiveIncrease',
+                    'Positive % Change'='positive_percent_change',
+                    '% Positive'='percent_positive',
+                    'Hospitalized Increase'='hospitalizedIncrease',
+                    'Hospitalized % Change'='hospitalized_percent_change',
+                    'Death Increase'='deathIncrease',
+                    'Death % Change'='death_percent_change'
                   )),
       selectInput('category', 'Color by:',
                   c('None' = 'state',
@@ -123,7 +130,15 @@ server <- function(input, output) {
                       )
                       
                       
-            )
+            ) %>% onRender("
+            function(el) {
+                $('.axis-title').click(function() {
+                    Shiny.onInputChange('name', 'percent_positive');
+                    $(this).css('fill', 'red');
+                });
+            }
+                
+            ")
         
     })
     
