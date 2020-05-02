@@ -23,10 +23,16 @@ ui <- fluidPage(
   
   fluidRow(
     column(4, sidebarPanel(
-      selectInput('name', 'Select a category:',
+      selectInput('name', 'Select a value to display:',
                   c('Positive Increase'='positiveIncrease'
                   )),
-      pickerInput('state', 'Select a state:', 
+      selectInput('category', 'Color by:',
+                  c('None' = 'state',
+                    'Governor Political Affiliation'='Governer.Political.Affiliation',
+                    'Region'='Region',
+                    'Time of Closure'='ClosureDateCat'
+                  )),
+      pickerInput('state', 'Select states:', 
                   choices = unique(levels(dat.change$state)), 
                   options = list(`actions-box` = TRUE), 
                   selected = unique(dat.change$state), multiple = T),
@@ -35,6 +41,7 @@ ui <- fluidPage(
                   min = 1,
                   max = 10,
                   value = 5),
+      materialSwitch('normalize', label = 'Normalize by state population?', status='primary'),
       width = 12
     )),
     column(8, plotlyOutput('pcp'))),
@@ -171,8 +178,19 @@ server <- function(input, output) {
     
     #--Jon--
     output$lineplot <- renderPlotly({
-        #linear models
+        #subset by states selected
         dat_subset <- subset(dat.change, state %in% input$state & name %in% input$name)
+        
+        # normalize
+        if (input$normalize == TRUE) {
+          dat_subset$value <- dat_subset$value / (dat_subset$POPESTIMATE2019/1e5)
+          y.label <- paste(input$name, "per 100K")
+        }
+        else {
+          y.label <- input$name
+        }
+      
+        #linear models
         dat_subset_before <- subset(dat_subset, value < Inf & !is.na(value) & date_diff <= input$innoculation)
         dat_subset_after <- subset(dat_subset, value < Inf & !is.na(value) & date_diff > input$innoculation)
         if (nrow(dat_subset > 0)) {
@@ -182,12 +200,13 @@ server <- function(input, output) {
         
         # draw plot
         plot_ly() %>% 
-            add_lines(data= dat_subset, x = ~date_diff, y= ~value, color=~state, text = ~state, line=(list(width = 1, opacity = 0.8))) %>%
+            add_lines(data= dat_subset, x = ~date_diff, y= ~value, color=~category, text = ~state, line=(list(width = 1, opacity = 0.8))) %>%
             add_trace(data = dat_subset_before, x = dat_subset_before$date_diff, y = predict(l1), type = 'scatter', mode = 'lines', line=list(color = 'purple', width = 4), name = "Trend Until Schools Closed") %>%
             add_trace(data = dat_subset_after, x = dat_subset_after$date_diff, y = predict(l2), type = 'scatter', mode = 'lines', line=list(color = 'blue', width = 4), name = "Trend After Schools Closed") %>%
             layout(shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2, 
                                  x0=0, x1=input$innoculation, xref = 'x', 
-                                 y0=0, y1= 1, yref='paper'))
+                                 y0=0, y1= 1, yref='paper'),
+                   yaxis = list(title = y.label))
     })
 }
 
