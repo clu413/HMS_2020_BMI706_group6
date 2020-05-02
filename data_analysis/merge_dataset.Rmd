@@ -73,7 +73,7 @@ school_closure_data <- school_closure_data[school_closure_data$StateAbbreviation
 dat$date <- as.Date(dat$date,
   format = "%Y%m%d")
 # merge two datasets by state
-dat <- merge(dat,school_closure_data[c('StateAbbreviation','StateClosureStartDate')], by.x="state", by.y="StateAbbreviation")
+dat <- merge(dat,school_closure_data[c('StateAbbreviation','StateClosureStartDate', 'ClosureDateCat')], by.x="state", by.y="StateAbbreviation")
 
 # add into political data
 dat <- merge(dat, politics, by.x='state','state_abb', all.x = TRUE)
@@ -88,8 +88,40 @@ dat <- merge(dat, data.frame(state = state.abb, Region = state.region), by = 'st
 
 # add population data
 dat <- merge(dat, population %>% select(state_abb, POPESTIMATE2019), by.x = 'state', 'state_abb', all.x = TRUE)
+
+dat$date_diff <- as.numeric(dat$date - dat$StateClosureStartDate)
+  dat$percent_positive <- dat$positive/dat$total
+  dat$state <- as.factor(dat$state)
+  dat <- dat %>% arrange(desc(date))
+  
+  percent_change <- function(row, value, df) {
+    df <- df %>%
+      filter(grepl(row['state'], state)) %>% # filter by the row's state
+      filter(date < row['date']) %>% # filter out the date later than the row's date
+      slice(1) # already sorted in the beginning, so just take the first one
+    if (nrow(df) > 0) {
+      return ((as.numeric(row[[value]])-df[[value]])/df[[value]])
+    }
+    else {
+      return (NA)
+    }
+  }
+  
+dat$positive_percent_change <- apply(dat, 1, percent_change, 'positive', dat)
+dat$percent_positive_percent_change <- apply(dat, 1, percent_change, 'percent_positive', dat)
+dat$hospitalized_percent_change <- apply(dat, 1, percent_change, 'hospitalized', dat)
+dat$death_percent_change <- apply(dat, 1, percent_change, 'death', dat)
+  
+plot_data <- dat %>%
+  pivot_longer(c(positiveIncrease, positive_percent_change, percent_positive,
+                   percent_positive_percent_change, hospitalizedIncrease, hospitalized_percent_change,
+                   deathIncrease, death_percent_change))
+
+dat.filt <- dat[c('state','date','positive','negative','total','recovered','death','totalTestResults','Location','Governor.Political.Affiliation','State.Senate.Majority.Political.Affiliation','State.House.Majority.Political.Affiliation','State.Attorney.General.Political.Affiliation','State.Insurance.Commissioner.Political.Affiliation','StateClosureStartDate','closed', 'Region', 'POPESTIMATE2019', 'ClosureDateCat')]
 ```
 
 ```{r Save}
 write_csv(dat, "../data/merged_data.csv")
+write_csv(plot_data, "../data/fixed_data_percent_change.csv")
+write_csv(dat.filt, "../data/filtered_data.csv")
 ```

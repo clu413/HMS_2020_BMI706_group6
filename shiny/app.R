@@ -6,8 +6,8 @@ library(lme4)
 library(shinyjs)
 
 #---load data---
-dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
-dat.filt   <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/filtered_data.csv'))
+dat.change <- read_csv('../data/fixed_data_percent_change.csv')
+dat.filt   <- read_csv('../data/filtered_data.csv')
 
 #---preprocess data---
 preproc <- function(df) {
@@ -16,6 +16,7 @@ preproc <- function(df) {
     df$Governor.Political.Affiliation <- factor(df$Governor.Political.Affiliation)
     return(df)
 }
+
 dat.change <- preproc(dat.change)
 dat.filt   <- preproc(dat.filt)
 
