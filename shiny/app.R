@@ -2,6 +2,7 @@ library(shiny)
 library(shinyWidgets)
 library(plotly)
 library(tidyverse)
+library(lme4)
 
 #---load data---
 dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
@@ -28,7 +29,7 @@ ui <- fluidPage(
                   )),
       selectInput('category', 'Color by:',
                   c('None' = 'state',
-                    'Governor Political Affiliation'='Governer.Political.Affiliation',
+                    'Governor Political Affiliation'='Governor.Political.Affiliation',
                     'Region'='Region',
                     'Time of Closure'='ClosureDateCat'
                   )),
@@ -194,21 +195,58 @@ server <- function(input, output) {
         dat_subset_before <- subset(dat_subset, value < Inf & !is.na(value) & date_diff <= input$innoculation)
         dat_subset_after <- subset(dat_subset, value < Inf & !is.na(value) & date_diff > input$innoculation)
         if (nrow(dat_subset > 0)) {
-            l1 <- lm(value ~ date_diff, data = dat_subset_before)
-            l2 <- lm(value ~ date_diff, data = dat_subset_after)
+          if(input$category != 'state') {
+              dat_subset_before$fv <- dat_subset_before %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
+              dat_subset_after$fv <- dat_subset_after %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
+              colorby <- formula(paste0("~",input$category))
+              if(input$category == 'Governor.Political.Affiliation') {
+                colorlist = c("blue", "red")
+              }
+              else {
+                colorlist = c("darkgreen","gold", "darkred", "purple")
+              }
+              
+          }
+          else {
+              dat_subset_before$fv <- dat_subset_before %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
+              dat_subset_after$fv <- dat_subset_after %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
+              colorby <- 1
+              colorlist = "Dark2"
+          }
         }
         
         # draw plot
-        plot_ly() %>% 
-            add_lines(data= dat_subset, x = ~date_diff, y= ~value, color=~category, text = ~state, line=(list(width = 1, opacity = 0.8))) %>%
-            add_trace(data = dat_subset_before, x = dat_subset_before$date_diff, y = predict(l1), type = 'scatter', mode = 'lines', line=list(color = 'purple', width = 4), name = "Trend Until Schools Closed") %>%
-            add_trace(data = dat_subset_after, x = dat_subset_after$date_diff, y = predict(l2), type = 'scatter', mode = 'lines', line=list(color = 'blue', width = 4), name = "Trend After Schools Closed") %>%
-            layout(shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2, 
+        dat_subset %>% group_by(state) %>% plot_ly() %>%
+            add_trace(x = ~date_diff, 
+                      y= ~value, 
+                      type = 'scatter', mode = 'lines', color=formula(paste0("~",input$category)), colors=colorlist,
+                      line=(list(width = 1, opacity = 0.6))) %>%
+            add_trace(data = dat_subset_before,
+                      x = dat_subset_before$date_diff,
+                      y = ~fv,
+                      type = 'scatter', mode = 'lines', color=colorby,
+                      line=list(width = 4, dash = 'dash'),
+                      name = "Trend Until Schools Closed", showlegend = FALSE) %>%
+            add_trace(data = dat_subset_after,
+                      x = dat_subset_after$date_diff,
+                      y = ~fv,
+                      type = 'scatter', mode = 'lines', color=colorby,
+                      line=list(width = 4, dash = 'dash'),
+                      name = "Trend After Schools Closed", showlegend = FALSE) %>%
+            layout(shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2,
                                  x0=0, x1=input$innoculation, xref = 'x', 
                                  y0=0, y1= 1, yref='paper'),
-                   yaxis = list(title = y.label))
+                   yaxis = list(title = y.label),
+                   margin = list(b=90),
+                   annotations = list(x=1, xref='paper', xanchor='right',
+                                      y=-0.3, yref='paper', 
+                                      text = "Dashed rine represents linear models before and after policy implementation",
+                                      showarrow = FALSE)) %>%
+            hide_colorbar()
+        
     })
 }
 
 #--Run the application--
 shinyApp(ui = ui, server = server)
+
