@@ -1,0 +1,95 @@
+---
+title: "merge_datasets"
+author: "Chenyue Lu"
+date: "4/26/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, include = FALSE}}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+```
+
+
+```{r Read Data, include=FALSE}
+## Covid Tracking Project Data
+covid_tracking_url_path <- 'https://covidtracking.com/api/v1/states/daily.csv'
+download.file(covid_tracking_url_path, destfile='covid_tracking_history.csv')
+dat <- read_csv("../data/covid_tracking_history.csv")
+population <- read_csv("../data/StatePopulation.csv")
+
+# convert date into factor
+dat$date <- as.factor(dat$date)
+
+## School closure data
+school_closure_data <- read_csv(url("https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/coronavirus-school-closures-data-4-7-2020.csv"))
+school_closure_data$StateClosureStartDate <- as.Date(school_closure_data$StateClosureStartDate, format = '%m/%d/%Y')
+
+# Political makeup data
+politics <- read.csv("../data/KFF_politics.csv",skip = 2, header = T)
+# remove Footnotes column
+politics <- politics[,!(colnames(politics) =='Footnotes')]
+# remove more footnotes
+politics <- politics[2:52,]
+# convert full state names to abbreviations
+politics$state_abb <- state.abb[match(politics$Location,state.name)]
+population$state_abb <- state.abb[match(population$NAME, state.name)]
+# state.abb doesn't have DC or PR. manually add this
+politics[politics$Location=='District of Columbia',]$state_abb <- 'DC'
+population[population$NAME == 'District of Columbia',]$state_abb <- 'DC'
+population[population$NAME == 'Puerto Rico Commonwealth',]$state_abb <- 'PR'
+```
+
+#### Combining data
+
+By combining the two data sets, one could derive the following information:
+
+- How timing of school closures affected the rate of new cases overall and by state  
+- Comparing 'R0' or the positive case rate before and after an intervention policy like school closures is enacted
+- The 'incubation time' between an intervention policy like school closures and when there is an effect in  the number of cases or hospitalizations  
+- How states' testing capacity correlated with school closure policies
+
+Our goal is to explore whether school closures demonstrate direct impact on the rate of new cases.
+
+```{r}
+## remove NAs in school closure data - removed Bureau of Indian Education 
+school_closure_data <- na.omit(school_closure_data, cols="StateClosureStartDate")
+
+# add ntiles
+n <- 3
+school_closure_data$ClosureDateCat <- ntile(school_closure_data$StateClosureStartDate, n)
+school_closure_data$ClosureDateCat <- factor(school_closure_data$ClosureDateCat, labels = c("Early", "Middle", "Late"), ordered = T)
+
+## match up states - removed Department of Defense Education Activity
+school_closure_data <- school_closure_data[school_closure_data$StateAbbreviation %in% unique(dat$state), ]
+
+# reformat dates for merging
+dat$date <- as.Date(dat$date,
+  format = "%Y%m%d")
+# merge two datasets by state
+dat <- merge(dat,school_closure_data[c('StateAbbreviation','StateClosureStartDate')], by.x="state", by.y="StateAbbreviation")
+
+# add into political data
+dat <- merge(dat, politics, by.x='state','state_abb', all.x = TRUE)
+
+# add column to indicate whether state was closed on that day 
+dat <- dat %>%
+  mutate(closed = date >= StateClosureStartDate) %>% # add column "closed" to dat based on whether it is closed that day
+  arrange(desc(date))
+
+# add region data
+dat <- merge(dat, data.frame(state = state.abb, Region = state.region), by = 'state')
+
+# add population data
+dat <- merge(dat, population %>% select(state_abb, POPESTIMATE2019), by.x = 'state', 'state_abb', all.x = TRUE)
+```
+
+```{r Save}
+write_csv(dat, "../data/merged_data.csv")
+```

@@ -2,6 +2,7 @@ library(shiny)
 library(shinyWidgets)
 library(plotly)
 library(tidyverse)
+library(lme4)
 library(shinyjs)
 
 #---load data---
@@ -20,38 +21,46 @@ dat.filt   <- preproc(dat.filt)
 
 #---UI---
 ui <- fluidPage(
-    
-    # Application title
-    titlePanel('What is a good title?'),
-    
-    sidebarLayout(
-        sidebarPanel(
-            selectInput('name', 'Select a category:',
-                        c('Positive Increase'='positiveIncrease',
-                          'Positive % Change'='positive_percent_change',
-                          '% Positive'='percent_positive',
-                          'Hospitalized Increase'='hospitalizedIncrease',
-                          'Hospitalized % Change'='hospitalized_percent_change',
-                          'Death Increase'='deathIncrease',
-                          'Death % Change'='death_percent_change')),
-            pickerInput('state', 'Select a state:', 
-                        choices = unique(levels(dat.change$state)), 
-                        options = list(`actions-box` = TRUE), 
-                        selected = unique(dat.change$state), multiple = T),
-            sliderInput('innoculation',
-                        'Innoculation Time (days):',
-                        min = 1,
-                        max = 10,
-                        value = 5)
-        ),
-        mainPanel(
-            plotlyOutput('map'),
-            plotlyOutput('pcp'),
-            plotlyOutput('lineplot'),
-            plotlyOutput('heatmap'),
-        )
+  titlePanel('When did US states close their schools when the COVID pandemic hit?'),
+  
+  fluidRow(
+    column(4, sidebarPanel(
+      selectInput('name', 'Select a value to display:',
+                  c('Positive Increase'='positiveIncrease',
+                    'Positive % Change'='positive_percent_change',
+                    '% Positive'='percent_positive',
+                    'Hospitalized Increase'='hospitalizedIncrease',
+                    'Hospitalized % Change'='hospitalized_percent_change',
+                    'Death Increase'='deathIncrease',
+                    'Death % Change'='death_percent_change'
+                  )),
+      selectInput('category', 'Color by:',
+                  c('None' = 'state',
+                    'Governor Political Affiliation'='Governor.Political.Affiliation',
+                    'Region'='Region',
+                    'Time of Closure'='ClosureDateCat'
+                  )),
+      pickerInput('state', 'Select states:', 
+                  choices = unique(levels(dat.change$state)), 
+                  options = list(`actions-box` = TRUE), 
+                  selected = unique(dat.change$state), multiple = T),
+      sliderInput('innoculation',
+                  'Innoculation Time (days):',
+                  min = 1,
+                  max = 10,
+                  value = 5),
+      materialSwitch('normalize', label = 'Normalize by state population?', status='primary'),
+      width = 12
+    )),
+    column(8, plotlyOutput('pcp'))),
+  
+  fluidRow(
+    # column(4, plotlyOutput('lineplot')),
+    column(6, plotlyOutput('map')),
+    column(6, plotlyOutput('lineplot'))
     )
 )
+
 
 # Define server logic
 server <- function(input, output) {
@@ -185,25 +194,74 @@ server <- function(input, output) {
     
     #--Jon--
     output$lineplot <- renderPlotly({
-        #linear models
+        #subset by states selected
         dat_subset <- subset(dat.change, state %in% input$state & name %in% input$name)
+        
+        # normalize
+        if (input$normalize == TRUE) {
+          dat_subset$value <- dat_subset$value / (dat_subset$POPESTIMATE2019/1e5)
+          y.label <- paste(input$name, "per 100K")
+        }
+        else {
+          y.label <- input$name
+        }
+      
+        #linear models
         dat_subset_before <- subset(dat_subset, value < Inf & !is.na(value) & date_diff <= input$innoculation)
         dat_subset_after <- subset(dat_subset, value < Inf & !is.na(value) & date_diff > input$innoculation)
         if (nrow(dat_subset > 0)) {
-            l1 <- lm(value ~ date_diff, data = dat_subset_before)
-            l2 <- lm(value ~ date_diff, data = dat_subset_after)
+          if(input$category != 'state') {
+              dat_subset_before$fv <- dat_subset_before %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
+              dat_subset_after$fv <- dat_subset_after %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
+              colorby <- formula(paste0("~",input$category))
+              if(input$category == 'Governor.Political.Affiliation') {
+                colorlist = c("blue", "red")
+              }
+              else {
+                colorlist = c("darkgreen","gold", "darkred", "purple")
+              }
+              
+          }
+          else {
+              dat_subset_before$fv <- dat_subset_before %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
+              dat_subset_after$fv <- dat_subset_after %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
+              colorby <- 1
+              colorlist = "Dark2"
+          }
         }
         
         # draw plot
-        plot_ly() %>% 
-            add_lines(data= dat_subset, x = ~date_diff, y= ~value, color=~state, text = ~state, line=(list(width = 1, opacity = 0.8))) %>%
-            add_trace(data = dat_subset_before, x = dat_subset_before$date_diff, y = predict(l1), type = 'scatter', mode = 'lines', line=list(color = 'purple', width = 4), name = "Trend Until Schools Closed") %>%
-            add_trace(data = dat_subset_after, x = dat_subset_after$date_diff, y = predict(l2), type = 'scatter', mode = 'lines', line=list(color = 'blue', width = 4), name = "Trend After Schools Closed") %>%
-            layout(shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2, 
+        dat_subset %>% group_by(state) %>% plot_ly() %>%
+            add_trace(x = ~date_diff, 
+                      y= ~value, 
+                      type = 'scatter', mode = 'lines', color=formula(paste0("~",input$category)), colors=colorlist,
+                      line=(list(width = 1, opacity = 0.6))) %>%
+            add_trace(data = dat_subset_before,
+                      x = dat_subset_before$date_diff,
+                      y = ~fv,
+                      type = 'scatter', mode = 'lines', color=colorby,
+                      line=list(width = 4, dash = 'dash'),
+                      name = "Trend Until Schools Closed", showlegend = FALSE) %>%
+            add_trace(data = dat_subset_after,
+                      x = dat_subset_after$date_diff,
+                      y = ~fv,
+                      type = 'scatter', mode = 'lines', color=colorby,
+                      line=list(width = 4, dash = 'dash'),
+                      name = "Trend After Schools Closed", showlegend = FALSE) %>%
+            layout(shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2,
                                  x0=0, x1=input$innoculation, xref = 'x', 
-                                 y0=0, y1= 1, yref='paper'))
+                                 y0=0, y1= 1, yref='paper'),
+                   yaxis = list(title = y.label),
+                   margin = list(b=90),
+                   annotations = list(x=1, xref='paper', xanchor='right',
+                                      y=-0.3, yref='paper', 
+                                      text = "Dashed rine represents linear models before and after policy implementation",
+                                      showarrow = FALSE)) %>%
+            hide_colorbar()
+        
     })
 }
 
 #--Run the application--
 shinyApp(ui = ui, server = server)
+
