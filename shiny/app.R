@@ -1,5 +1,5 @@
 library(shiny)
-library(shinyWidgets)
+library(htmlwidgets)
 library(plotly)
 library(tidyverse)
 library(lme4)
@@ -120,54 +120,52 @@ output$map <- renderPlotly({
       })
     
     #--Dany--
-    #DTH: no plot with only one state selected
+    #DTH: no plot with only one state selected, RESOLVED taking away dropdown
     output$pcp <- renderPlotly({
       
         df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame() 
-        df <- df[sort(df$state),]%>% filter(state %in% input$state) 
-        party <- unique(dat.filt$Governor.Political.Affiliation)
-        region <- unique(as.factor(dat.filt$Region))
-        closure <- unique(as.factor(dat.filt$StateClosureStartDate))
-        closure.cat <- unique(dat.filt$ClosureDateCat)
+        df <- df[sort(df$state, decreasing = T),] %>% filter(state %in% input$state) 
+        party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
+        state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T) 
+        region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
+        closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
+        closure.cat <-  c('Early', 'Middle', 'Late')
         
         pcdat <- df %>%
             select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
             subset(!is.na(Governor.Political.Affiliation)) %>% filter(state %in% input$state)
-        pcdat$StateClosureStartDate <- as.factor(pcdat$StateClosureStartDate)
-        pcdat$state <- as.factor(pcdat$state)
-        pcdat$Region <- as.factor(pcdat$Region)
-        pcdat$ClosureDateCat <- as.factor(pcdat$ClosureDateCat)
+        pcdat$StateClosureStartDate <- factor(pcdat$StateClosureStartDate, levels = closure)
+        pcdat$state <- factor(pcdat$state, levels = state)
+        pcdat$Region <- factor(pcdat$Region, levels = region)
+        pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Early', 'Middle', 'Late'), ordered = T)
         factor_cols <- sapply(pcdat, is.factor)
         pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
-        pcdat$state <- as.factor(pcdat$state) %>% unclass()
-        
+        pcdat <- pcdat[sort(pcdat$state, decreasing = T),]
+
         #DTH: magma or  viridis
         #DTH can color = 'grey'
-        #DTH how to make sure that labels appear even if data is there? how to add space between labels?
         if (input$category == 'state'){
           pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
-                      domain = list(x=c(0,2893), y=c(0,3 )),
+                      domain = list(x=c(0,2893), y=c(0,3)),
                       dimensions = list(
-                        list(range = c(1,length(df$state)),
-                             tickvals = c(1:length(df$state)),
+                        list(range = c(1,50),
+                             tickvals = c(1:50),
                              label = 'State',
-                             ticktext = c(paste(df$state)),
-                             values = ~state ,
-                             visible = TRUE,
-                             side = 'top'),
+                             ticktext = c(paste(state)),
+                             values = ~state),
                         
                         list(range = c(1,4),
                              tickvals = c(1:4),
                              label = 'Region',
-                             ticktext = c(paste(df$Region)),
+                             ticktext = c(paste(region)),
                              values = ~Region, 
                              visible = TRUE, 
                              ticks = 'outside'),
                         
                         list(range=c(1,2),
-                             tickvals = c(1, 2),
+                             tickvals = c(1:2),
                              label = 'Party',
                              ticktext = c(paste(party)),
                              values = ~Governor.Political.Affiliation,
@@ -178,23 +176,25 @@ output$map <- renderPlotly({
                              values= ~total,
                              visible = TRUE),
                         
-                        list(range = c(1,3),
+                  
+                        list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
+                             tickvals = c(1:3),
                              label = 'Time of Closure',
-                             tickvals = c(1,3),
                              ticktext = c(paste(closure.cat)),
                              values = ~ClosureDateCat,
                              visible = TRUE),
                       
                         list(range = c(1,7),
                              label = 'School Closure Date',
-                             tickvals = c(1,7),
+                             tickvals = c(1:7),
                              ticktext = c(paste(closure)),
                              values = ~StateClosureStartDate, 
-                             visible = TRUE
+                             visible = TRUE,
+                             ticks = 'outside'
                         )
                         
                       )
-            ) #%>% layout(margin = list(l = 150, r = 20, b = 10, t = 10))
+            ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
         else if(input$category == 'Region'){pcdat %>%
             plot_ly() %>%
@@ -203,13 +203,13 @@ output$map <- renderPlotly({
                         list(range = c(1,length(df$state)),
                              tickvals = c(1:length(df$state)),
                              label = 'State',
-                             ticktext = c(paste(df$state)),
+                             ticktext = c(paste(state)),
                              values = ~state ),
                         
                         list(range = c(1,4),
                              tickvals = c(1:4),
                              label = 'Region',
-                             ticktext = c(paste(df$Region)),
+                             ticktext = c(paste(region)),
                              values = ~Region ),
                         
                         list(range = c(~min(total),~max(total)),
@@ -217,25 +217,26 @@ output$map <- renderPlotly({
                              values= ~total),
                         
                         list(range=c(1,2),
-                             tickvals = c(1, 2),
+                             tickvals = c(1:2),
                              label = 'Party',
                              ticktext = c(paste(party)),
                              values = ~Governor.Political.Affiliation ),
                         
                         list(range = c(1,7),
                              label = 'School Closure Date',
-                             tickvals = c(1,7),
+                             tickvals = c(1:7),
                              ticktext = c(paste(closure)),
                              values = ~StateClosureStartDate
                         ),
                         
                         list(range = c(1,3),
                              label = 'Time of Closure',
-                             tickvals = c(1,3),
+                             tickvals = c(1:3),
                              ticktext = c(paste(closure.cat)),
                              values = ~ClosureDateCat)
                       )
-            )}
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+          }
         else if(input$category == 'ClosureDateCat') {
           pcdat %>%
             plot_ly() %>%
@@ -244,13 +245,13 @@ output$map <- renderPlotly({
                         list(range = c(1,length(df$state)),
                              tickvals = c(1:length(df$state)),
                              label = 'State',
-                             ticktext = c(paste(df$state)),
+                             ticktext = c(paste(state)),
                              values = ~state ),
                         
                         list(range = c(1,4),
                              tickvals = c(1:4),
                              label = 'Region',
-                             ticktext = c(paste(df$Region)),
+                             ticktext = c(paste(region)),
                              values = ~Region ),
                         
                         list(range = c(~min(total),~max(total)),
@@ -258,25 +259,25 @@ output$map <- renderPlotly({
                              values= ~total),
                         
                         list(range=c(1,2),
-                             tickvals = c(1, 2),
+                             tickvals = c(1:2),
                              label = 'Party',
                              ticktext = c(paste(party)),
                              values = ~Governor.Political.Affiliation ),
                         
                         list(range = c(1,7),
                              label = 'School Closure Date',
-                             tickvals = c(1,7),
+                             tickvals = c(1:7),
                              ticktext = c(paste(closure)),
                              values = ~StateClosureStartDate
                         ),
                         
                         list(range = c(1,3),
                              label = 'Time of Closure',
-                             tickvals = c(1,3),
+                             tickvals = c(1:3),
                              ticktext = c(paste(closure.cat)),
                              values = ~ClosureDateCat)
                       )
-            )
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
         else if(input$category == 'Governor.Political.Affiliation'){
         
@@ -287,13 +288,13 @@ output$map <- renderPlotly({
                         list(range = c(1,length(df$state)),
                              tickvals = c(1:length(df$state)),
                              label = 'State',
-                             ticktext = c(paste(df$state)),
+                             ticktext = c(paste(state)),
                              values = ~state ),
                         
                         list(range = c(1,4),
                              tickvals = c(1:4),
                              label = 'Region',
-                             ticktext = c(paste(df$Region)),
+                             ticktext = c(paste(region)),
                              values = ~Region ),
                         
                         list(range = c(~min(total),~max(total)),
@@ -301,25 +302,26 @@ output$map <- renderPlotly({
                              values= ~total),
                         
                         list(range=c(1,2),
-                             tickvals = c(1, 2),
+                             tickvals = c(1:2),
                              label = 'Party',
                              ticktext = c(paste(party)),
                              values = ~Governor.Political.Affiliation ),
                         
                         list(range = c(1,7),
                              label = 'School Closure Date',
-                             tickvals = c(1,7),
+                             tickvals = c(1:7),
                              ticktext = c(paste(closure)),
                              values = ~StateClosureStartDate
                         ),
                         
                         list(range = c(1,3),
                              label = 'Time of Closure',
-                             tickvals = c(1,3),
+                             tickvals = c(1:3),
                              ticktext = c(paste(closure.cat)),
                              values = ~ClosureDateCat)
                       )
-            )}
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+          }
         
         
         
@@ -331,7 +333,7 @@ output$map <- renderPlotly({
             #         $(this).css('fill', 'red');
             #     });
              #}
-                
+
             #")
         
     })
