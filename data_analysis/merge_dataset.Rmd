@@ -20,7 +20,7 @@ library(dplyr)
 ```{r Read Data, include=FALSE}
 ## Covid Tracking Project Data
 covid_tracking_url_path <- 'https://covidtracking.com/api/v1/states/daily.csv'
-download.file(covid_tracking_url_path, destfile='covid_tracking_history.csv')
+download.file(covid_tracking_url_path, destfile='../data/covid_tracking_history.csv')
 dat <- read_csv("../data/covid_tracking_history.csv")
 population <- read_csv("../data/StatePopulation.csv")
 
@@ -109,12 +109,12 @@ dat$date_diff <- as.numeric(dat$date - dat$StateClosureStartDate)
   
 dat$positive_percent_change <- apply(dat, 1, percent_change, 'positive', dat)
 dat$percent_positive_percent_change <- apply(dat, 1, percent_change, 'percent_positive', dat)
-dat$hospitalized_percent_change <- apply(dat, 1, percent_change, 'hospitalized', dat)
+dat$total_tests_percent_change <- apply(dat, 1, percent_change, 'total', dat)
 dat$death_percent_change <- apply(dat, 1, percent_change, 'death', dat)
   
 plot_data <- dat %>%
   pivot_longer(c(positiveIncrease, positive_percent_change, percent_positive,
-                   percent_positive_percent_change, hospitalizedIncrease, hospitalized_percent_change,
+                   percent_positive_percent_change, totalTestResultsIncrease, total_tests_percent_change,
                    deathIncrease, death_percent_change))
 
 dat.filt <- dat[c('state','date','positive','negative','total','recovered','death','totalTestResults','Location','Governor.Political.Affiliation','State.Senate.Majority.Political.Affiliation','State.House.Majority.Political.Affiliation','State.Attorney.General.Political.Affiliation','State.Insurance.Commissioner.Political.Affiliation','StateClosureStartDate','closed', 'Region', 'POPESTIMATE2019', 'ClosureDateCat')]
