@@ -47,7 +47,7 @@ ui <- fluidPage(
                       'Region'='Region',
                       'Time of Closure'='ClosureDateCat'
                     )),
-        selectInput('name', 'Select a category (linechart and heamap only):',
+        selectInput('name', 'Select a category (linechart and heatmap only):',
                     c('Positive Increase'='positiveIncrease',
                       'Positive % Change'='positive_percent_change',
                       '% Positive of Total'='percent_positive',
@@ -56,7 +56,7 @@ ui <- fluidPage(
                       'Death Increase'='deathIncrease',
                       'Death % Change'='death_percent_change'
                     )),
-        sliderInput('innoculation', 'Innoculation Time (days) (linechart and heamap only):',
+        sliderInput('innoculation', 'Innoculation Time (days) (linechart only):',
                     min = 1,max = 10, value = 5),
         materialSwitch('normalize', label = 'Normalize by state population?', status='primary'),
         width = 12
@@ -231,33 +231,7 @@ server <- function(input, output, session) {
                   dimensions = dimensions
         )%>% layout(autosize = F, height = 600, width = 2000, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Governor Political Affiliation")
     }
-    out %>% onRender("
-          function(el) {
-            $('.shinyjs-hide').css('display', 'none');
-              var dict = {
-                      'States': null,
-                      'Governor Political Affiliations': 'Governor.Political.Affiliation',
-                      'Regions': 'Region',
-                      'School Closure Dates': 'ClosureDateCat',
-                      'Total tests': 'total',
-                  };
-              // change hover css
-              $('.axis-title').hover(function() {
-                  self = $(this)
-                  if (dict[self.text()]) {
-                      self.css('cursor', 'pointer');
-                  }
-              });
-              $('.axis-title').click(function() {
-                  var text = $(this).text();
-                  if (dict[text]) {
-                      Shiny.setInputValue('category', dict[text]);
-                      $('.axis-title').css('fill', 'black');
-                      $(this).css('fill', 'red');
-                  }
-              });
-          }
-        ") %>%
+    out %>%
       event_register('plotly_restyle')
   })
 
@@ -323,7 +297,7 @@ server <- function(input, output, session) {
     heatmap.height <- 30
     cat <- input$name
     orderby <- input$category
-    states <- unique(dat.filt[order(dat.filt[[orderby]]),]$state)
+    states <- reactive.states.input$states
     mat <- matrix(rep(NA, length(states)*heatmap.height), nrow=heatmap.height)
     for (i in 1:length(states)) {
       state <- states[i]
@@ -358,7 +332,7 @@ server <- function(input, output, session) {
       x=states,
       colorbar = list(title = hm.label),
       z=mat, type='heatmap',
-      width=700,
+      width=900,
     ) %>%
       layout(
         xaxis=list(
