@@ -189,7 +189,7 @@ output$map <- renderPlotly({
         }
         else if(input$category == 'Region'){
           out <- pcdat %>%
-            out <- plot_ly() %>%
+            plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
                       dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
