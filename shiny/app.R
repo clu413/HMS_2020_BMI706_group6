@@ -10,6 +10,8 @@ dat.change <- read_csv('../data/fixed_data_percent_change.csv')
 dat.change[is.infinite(dat.change$value), 'value'] <- NA
 
 dat.filt   <- read_csv('../data/filtered_data.csv')
+#dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
+#dat.filt   <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/filtered_data.csv'))
 
 #---preprocess data---
 preproc <- function(df) {
@@ -69,23 +71,53 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output) {
     #--Chen--
-    output$map <- renderPlotly({
-        df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
-        df$hover <- with(df, paste(state, '<br>',positive))
-        plot_geo(df, locationmode = 'USA-states') %>%
-            add_trace(text = ~hover, locations = ~state,
-                      color = ~Governor.Political.Affiliation
-            ) %>%
-            layout(
-                title = 'lallaa',
-                geo = g <- list(
-                    scope = 'usa',
-                    projection = list(type = 'albers usa'),
-                    showlakes = TRUE,
-                    lakecolor = toRGB('white')
-                )
-            )
-    })
+output$map <- renderPlotly({
+    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
+    df$hover <- with(df, paste(state, '<br>',positive))
+    g <- list(
+      scope = 'usa',
+      projection = list(type = 'albers usa'),
+      showlakes = TRUE,
+      lakecolor = toRGB('white')
+    )
+    if (input$category == 'state'){
+      plot_geo(df, locationmode = 'USA-states') %>%
+        add_trace(text = ~hover, locations = ~state,
+                  color = ~as.factor(StateClosureStartDate),
+                  colors = "Blues"
+        )%>%
+        layout(
+          title = 'US states',
+          geo = g
+        )}
+    else if(input$category == 'Governor.Political.Affiliation'){
+      plot_geo(df, locationmode = 'USA-states') %>%
+        add_trace(text = ~hover, locations = ~state,
+                  color = ~Governor.Political.Affiliation,
+                  colors = c("blue", "red"))%>%
+        layout(
+          title = 'Governor.Political.Affiliation',
+          geo = g)
+    }
+    else if(input$category == 'Region'){
+      plot_geo(df, locationmode = 'USA-states') %>%
+        add_trace(text = ~hover, locations = ~state,
+                  color = ~Region,
+                  colors = c("blue", "red"))%>%
+        layout(
+          title = 'Governor.Political.Affiliation',
+          geo = g)
+    }
+    else if(input$category == 'ClosureDateCat') {
+      plot_geo(df, locationmode = 'USA-states') %>%
+        add_trace(text = ~hover, locations = ~state,
+                  color = ~ClosureDateCat,
+                  colors = "Reds")%>%
+        layout(
+          title = 'School Closure Date',
+          geo = g)
+    }
+      })
     
     #--Dany--
     output$pcp <- renderPlotly({
