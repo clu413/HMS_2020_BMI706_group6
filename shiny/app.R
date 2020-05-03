@@ -64,10 +64,9 @@ ui <- fluidPage(
       column(6, tabsetPanel(
       tabPanel('Line Chart', plotlyOutput('lineplot')),
       tabPanel('Heatmap', plotlyOutput('heatmap'))
-    )),
-      column(4, plotlyOutput('map'))
-    )
-    )
+    )), 
+      column(4, plotlyOutput('map')), style='padding-top: 20px')
+  )
 
 
 # Define server logic
