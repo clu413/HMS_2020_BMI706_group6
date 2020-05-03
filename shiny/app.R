@@ -10,10 +10,7 @@ library(htmlwidgets)
 #---load data---
 dat.change <- read_csv('../data/fixed_data_percent_change.csv')
 dat.change[is.infinite(dat.change$value), 'value'] <- NA
-
 dat.filt   <- read_csv('../data/filtered_data.csv')
-#dat.change <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/fixed_data_percent_change.csv'))
-#dat.filt   <- read_csv(url('https://raw.githubusercontent.com/luchenyue95/HMS_2020_BMI706_group6/master/data/filtered_data.csv'))
 
 #---preprocess data---
 preproc <- function(df) {
@@ -28,6 +25,12 @@ dat.filt   <- preproc(dat.filt)
 
 #---UI---
 ui <- fluidPage(
+  tags$head(tags$script("
+    $(document).on('shiny:updateInput', function(event) {
+      alert(event.name);
+      console.log(event.name, event.value);
+    });
+  ")),
   titlePanel('When did US states close their schools when the COVID pandemic hit?'),
 
   fluidRow(
@@ -47,10 +50,10 @@ ui <- fluidPage(
                     'Region'='Region',
                     'Time of Closure'='ClosureDateCat'
                   )),
-      pickerInput('state', 'Select states:',
-                  choices = unique(levels(dat.change$state)),
-                  options = list(`actions-box` = TRUE),
-                  selected = unique(dat.change$state), multiple = T),
+      # pickerInput('state', 'Select states:',
+      #             choices = unique(levels(dat.change$state)),
+      #             options = list(`actions-box` = TRUE),
+      #             selected = unique(dat.change$state), multiple = T),
       sliderInput('innoculation',
                   'Innoculation Time (days):',
                   min = 1,
@@ -72,6 +75,12 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
+  reactive.states.input <- reactiveValues()
+  reactive.pcp.dims <- reactiveValues()
+
+  # add list of states
+  reactive.states.input$states <- unique(dat.change$state)
+
     #--Chen--
 output$map <- renderPlotly({
     df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
@@ -121,8 +130,9 @@ output$map <- renderPlotly({
     }
       })
 
-    #--Dany--
-    #DTH: no plot with only one state selected, RESOLVED taking away dropdown
+    # a hack for linking to state selection - update accordingly!
+    pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'ClosureDatCat', 'StateClosureStartDate')
+    pcp.states <- unique(levels(dat.change$state))
     output$pcp <- renderPlotly({
 
         df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
@@ -142,7 +152,7 @@ output$map <- renderPlotly({
 
         pcdat <- df %>%
             select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
-            subset(!is.na(Governor.Political.Affiliation)) %>% filter(state %in% input$state)
+            subset(!is.na(Governor.Political.Affiliation))
         pcdat$StateClosureStartDate <- factor(pcdat$StateClosureStartDate, levels = closure)
         pcdat$state <- factor(pcdat$state, levels = state)
         pcdat$Region <- factor(pcdat$Region, levels = region)
@@ -172,7 +182,7 @@ output$map <- renderPlotly({
                values = ~Governor.Political.Affiliation),
           list(range = c(~min(total),~max(total)),
                label = total.label,
-               
+
                values= ~total),
           list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
                tickvals = c(1:3),
@@ -187,37 +197,35 @@ output$map <- renderPlotly({
                ticks = 'outside'
           )
         )
+        out <- pcdat %>% plot_ly(source='pcoords')
         if (input$category == 'state'){
-          out <- pcdat %>%
-            plot_ly() %>%
+          out <- out %>%
             add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
                       domain = list(x=c(0,2893), y=c(0,3)),
                       dimensions = dimensions
             ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By State")
         }
         else if(input$category == 'Region'){
-          out <- pcdat %>%
-            plot_ly() %>%
+          out <- out %>%
             add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
                       dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Region")
           }
         else if(input$category == 'ClosureDateCat') {
-            out <- pcdat %>%
-              plot_ly() %>%
+          out <- out %>%
               add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
                         dimensions = dimensions
               )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Closure Date")
         }
         else if(input$category == 'Governor.Political.Affiliation'){
-            out <- pcdat %>%
-              plot_ly() %>%
+          out <- out %>%
               add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
                         dimensions = dimensions
               )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Governor Political Affiliation")
         }
         out %>% onRender("
           function(el) {
+            console.log(el);
               var dict = {
                       'States': null,
                       'Governor Political Affiliations': 'Governor.Political.Affiliation',
@@ -235,14 +243,71 @@ output$map <- renderPlotly({
               $('.axis-title').click(function() {
                   var text = $(this).text();
                   if (dict[text]) {
-                      Shiny.onInputChange('category', dict[text]);
+                      Shiny.setInputValue('category', dict[text]);
                       $('.axis-title').css('fill', 'black');
                       $(this).css('fill', 'red');
                   }
               });
           }
-        ")
+        ") %>%
+        event_register('plotly_restyle')
     })
+
+    observeEvent(event_data('plotly_restyle', source = 'pcoords'), {
+      d <- event_data("plotly_restyle", source = 'pcoords')
+      # what is the relevant dimension (i.e. variable)?
+      dimension <- as.numeric(stringr::str_extract(names(d[[1]]), "[0-9]+"))
+      # If the restyle isn't related to a dimension, exit early.
+      if (!length(dimension)) return()
+      # careful of the indexing in JS (0) versus R (1)!
+      dimension_name <- pcp.dimensions[[dimension + 1]]
+      # a given dimension can have multiple selected ranges
+      # these will come in as 3D arrays, but a list of vectors
+      # is nicer to work with
+      info <- d[[1]][[1]]
+      if (typeof(info) == "NULL") {
+        reactive.pcp.dims[[dimension_name]] <- NA
+      } else {
+        reactive.pcp.dims[[dimension_name]] <- if (length(dim(info)) == 3) {
+          lapply(seq_len(dim(info)[2]), function(i) info[,i,])
+        } else {
+          list(as.numeric(info))
+        }
+      }
+      party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
+      state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
+      region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
+      closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
+      closure.cat <-  c('Early', 'Middle', 'Late')
+      dat.init <- dat.filt
+      for (field in names(reactive.pcp.dims)) {
+        ranges <- reactive.pcp.dims[[field]]
+        if (is.na(ranges)) {
+          # somehow case_when doesn't work
+          if (field == 'state') { all_values <- state }
+          else if (field == 'Region') { all_values <- region}
+          else if (field == 'Governor.Political.Affiliation') { all_values <- party }
+          else if (field == 'ClosureDatCat') { all_values <- closure.cat }
+          else { all_values <- closure }
+        } else {
+          all_values <- c()
+          for (range_i in seq_along(ranges)) {
+            range <- seq(ceiling(ranges[[range_i]][1]), floor(ranges[[range_i]][2]))
+            values <- case_when(
+              field == 'state' ~ state[range],
+              field == 'Region' ~ region[range],
+              field == 'Governor.Political.Affiliation' ~ party[range],
+              field == 'ClosureDatCat' ~ closure.cat[range],
+              TRUE ~ closure[range] # state closure start date
+            )
+            all_values <- c(all_values, values)
+          }
+        }
+        dat.init <- dat.init[dat.init[[field]] %in% all_values,]
+      }
+      reactive.states.input$states <- unique(dat.init$state)
+    })
+
 
     #--Kath--
     heatmapMatrix <- reactive({
@@ -311,7 +376,7 @@ output$map <- renderPlotly({
     #--Jon--
     output$lineplot <- renderPlotly({
         #subset by states selected
-        dat_subset <- subset(dat.change, state %in% input$state & name %in% input$name & positive > 100)
+        dat_subset <- subset(dat.change, state %in% reactive.states.input$states & name %in% input$name & positive > 100)
 
         # normalize
         if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
@@ -339,7 +404,7 @@ output$map <- renderPlotly({
           }
           else {
               colorby <- 1
-              colorlist = colorRampPalette(brewer.pal(8, "Dark2"))(length(input$state))
+              colorlist = colorRampPalette(brewer.pal(8, "Dark2"))(length(reactive.states.input$states))
           }
         }
 
