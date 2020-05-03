@@ -25,12 +25,6 @@ dat.filt   <- preproc(dat.filt)
 
 #---UI---
 ui <- fluidPage(
-  tags$head(tags$script("
-    $(document).on('shiny:updateInput', function(event) {
-      alert(event.name);
-      console.log(event.name, event.value);
-    });
-  ")),
   titlePanel('When did US states close their schools when the COVID pandemic hit?'),
 
   fluidRow(
@@ -44,12 +38,12 @@ ui <- fluidPage(
                     'Death Increase'='deathIncrease',
                     'Death % Change'='death_percent_change'
                   )),
-      # selectInput('category', 'Color by:',
-      #             c('None' = 'state',
-      #               'Governor Political Affiliation'='Governor.Political.Affiliation',
-      #               'Region'='Region',
-      #               'Time of Closure'='ClosureDateCat'
-      #             )),
+      selectInput('category', 'Color by:',
+                  c('None' = 'state',
+                    'Governor Political Affiliation'='Governor.Political.Affiliation',
+                    'Region'='Region',
+                    'Time of Closure'='ClosureDateCat'
+                  )),
       # pickerInput('state', 'Select states:',
       #             choices = unique(levels(dat.change$state)),
       #             options = list(`actions-box` = TRUE),
@@ -143,7 +137,7 @@ output$map <- renderPlotly({
         else {
           total.label <- "Total Tests"
         }
-        df <- df[sort(df$state, decreasing = T),] %>% filter(state %in% input$state)
+        df <- df[sort(df$state, decreasing = T),]
         party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
         state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
         region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
