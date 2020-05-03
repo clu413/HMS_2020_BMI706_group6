@@ -7,6 +7,8 @@ library(shinyjs)
 
 #---load data---
 dat.change <- read_csv('../data/fixed_data_percent_change.csv')
+dat.change[is.infinite(dat.change$value), 'value'] <- NA
+
 dat.filt   <- read_csv('../data/filtered_data.csv')
 
 #---preprocess data---
