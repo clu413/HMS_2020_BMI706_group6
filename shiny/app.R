@@ -1,5 +1,5 @@
 library(shiny)
-library(shinyWidgets)
+library(htmlwidgets)
 library(plotly)
 library(tidyverse)
 library(lme4)
@@ -121,53 +121,97 @@ output$map <- renderPlotly({
       })
 
     #--Dany--
+    #DTH: no plot with only one state selected, RESOLVED taking away dropdown
     output$pcp <- renderPlotly({
 
-        df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame() %>% filter(state %in% input$state)
-        party <- unique(df$Governor.Political.Affiliation)
+        df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
+        df <- df[sort(df$state, decreasing = T),] %>% filter(state %in% input$state)
+        party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
+        state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
+        region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
+        closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
+        closure.cat <-  c('Early', 'Middle', 'Late')
+
         pcdat <- df %>%
-            select(state, total, StateClosureStartDate, Governor.Political.Affiliation) %>%
+            select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
             subset(!is.na(Governor.Political.Affiliation)) %>% filter(state %in% input$state)
-        pcdat$StateClosureStartDate <- as.factor(pcdat$StateClosureStartDate)
-        pcdat$state <- as.factor(pcdat$state)
+        pcdat$StateClosureStartDate <- factor(pcdat$StateClosureStartDate, levels = closure)
+        pcdat$state <- factor(pcdat$state, levels = state)
+        pcdat$Region <- factor(pcdat$Region, levels = region)
+        pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Early', 'Middle', 'Late'), ordered = T)
         factor_cols <- sapply(pcdat, is.factor)
         pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
-        pcdat$state <- as.factor(pcdat$state) %>% unclass()
+        pcdat <- pcdat[sort(pcdat$state, decreasing = T),]
 
-        pcdat %>%
+        #DTH: magma or  viridis
+        #DTH can color = 'grey'
+        dimensions = list(
+          list(range = c(1,length(df$state)),
+               tickvals = c(1:length(df$state)),
+               label = 'State',
+               ticktext = c(paste(state)),
+               values = ~state),
+          list(range = c(1,4),
+               tickvals = c(1:4),
+               label = 'Region',
+               ticktext = c(paste(region)),
+               values = ~Region,
+               ticks = 'outside'),
+          list(range=c(1,2),
+               tickvals = c(1:2),
+               label = 'Party',
+               ticktext = c(paste(party)),
+               values = ~Governor.Political.Affiliation),
+          list(range = c(~min(total),~max(total)),
+               label = 'Total Tests',
+               values= ~total),
+          list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
+               tickvals = c(1:3),
+               label = 'Time of Closure',
+               ticktext = c(paste(closure.cat)),
+               values = ~ClosureDateCat),
+          list(range = c(1,7),
+               label = 'School Closure Date',
+               tickvals = c(1:7),
+               ticktext = c(paste(closure)),
+               values = ~StateClosureStartDate,
+               ticks = 'outside'
+          )
+        )
+        if (input$category == 'state'){
+          pcdat %>%
             plot_ly() %>%
-            add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'blue'),c(1,'red'))),
-                      dimensions = list(
-                          list(range = c(1,length(df$state)),
-                               tickvals = c(1:length(df$state)),
-                               label = 'state',
-                               ticktext = c(paste(df$state)),
-                               #multiselect = TRUE,
-                               #constraintrange = list(c(1,1), c(25,25), c(49,50)),
-                               #constraintrange = c(state_restraint),
-                               values = ~state ),
+            add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
+                      domain = list(x=c(0,2893), y=c(0,3)),
+                      dimensions = dimensions
+            ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+        }
+        else if(input$category == 'Region'){pcdat %>%
+            plot_ly() %>%
+            add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
+                      dimensions = dimensions
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+          }
+        else if(input$category == 'ClosureDateCat') {
+          pcdat %>%
+            plot_ly() %>%
+            add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
+                      dimensions = dimensions
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+        }
+        else if(input$category == 'Governor.Political.Affiliation'){
 
-                          list(range = c(~min(total),~max(total)),
-                               label = 'total tests',
-                               tickvals = c(~min(total),~max(total)),
-                               values= ~total),
-
-                          list(range=c(1,2),
-                               tickvals = c(1, 2),
-                               label = 'party',
-                               ticktext = c(paste(party)),
-                               values = ~Governor.Political.Affiliation ),
-
-                          list(range = c(1,7),
-                               tickvals = c(1,7),
-                               label = 'school closure date',
-                               ticktext = c(paste(dat.filt$StateClosureStartDate)),
-                               values = ~StateClosureStartDate
-                          )
-                      )
+          pcdat %>%
+            plot_ly() %>%
+            add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
+                      dimensions = dimensions
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+          }
 
 
-            ) #%>% onRender("
+
+        #DTH: disabled b/c for some reason does not work on my system
+        #%>% onRender("
             # function(el) {
             #     $('.axis-title').click(function() {
             #         Shiny.onInputChange('name', 'percent_positive');
