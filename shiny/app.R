@@ -60,8 +60,8 @@ ui <- fluidPage(
     )),
     column(8, plotlyOutput('pcp'))),
     fluidRow(
-        column(6, plotlyOutput('map')),
-        column(6, tabsetPanel(
+        column(5, plotlyOutput('map')),
+        column(7, tabsetPanel(
            tabPanel('Line Chart', plotlyOutput('lineplot')),
            tabPanel('Heatmap', plotlyOutput('heatmap'))
         ))
@@ -238,11 +238,11 @@ output$map <- renderPlotly({
     #--Kath--
     heatmapMatrix <- reactive({
         # obtain 30 timestamps after school closure (including school closure date)
-        heatmap.width <- 30
+        heatmap.height <- 30
         cat <- input$name
         orderby <- input$category
         states <- unique(dat.filt[order(dat.filt[[orderby]]),]$state)
-        mat <- matrix(rep(NA, length(states)*heatmap.width), nrow=length(states))
+        mat <- matrix(rep(NA, length(states)*heatmap.height), nrow=heatmap.height)
         for (i in 1:length(states)) {
             state <- states[i]
             # filter by state
@@ -251,25 +251,26 @@ output$map <- renderPlotly({
             df <- df %>%
                 filter(date >= closure_date) %>%
                 arrange(date)
-            mat[i,] <- df$value[1:heatmap.width]
+            mat[,i] <- df$value[1:heatmap.height]
         }
-        rownames(mat) <- states
-
+        colnames(mat) <- states
+        rownames(mat) <- seq(1, heatmap.height)
         return(mat)
     })
 
     output$heatmap <- renderPlotly({
         mat <- heatmapMatrix()
-        states <- rownames(mat)
+        states <- colnames(mat)
+        rows <- rownames(mat)
         plot_ly(
-            y=rownames(mat),
-            x=seq(1,30),
+            y=rows,
+            x=states,
             z=mat, type='heatmap',
-            height=800,
+            width=700,
         ) %>%
             layout(
                 xaxis=list(
-                    title='Days',
+                    title='States',
                     dtick=1,
                     zeroline=F,
                     showline=F,
@@ -277,14 +278,15 @@ output$map <- renderPlotly({
                     showgrid=T
                 ),
                 yaxis=list(
-                    title='States',
+                    autorange='reversed',
+                    title='Days',
                     dtick=1,
                     zeroline=F,
                     showline=F,
                     showticklabels=T,
                     showgrid=T
                 )) %>%
-            add_segments(x=10, xend=10, y=states[1], yend=states[length(states)])
+            add_segments(x=states[1], xend=states[length(states)], y=which(rows == 10), yend=which(rows == 10))
     })
 
     #--Jon--
