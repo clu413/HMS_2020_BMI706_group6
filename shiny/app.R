@@ -56,10 +56,6 @@ ui <- fluidPage(
                       'Death Increase'='deathIncrease',
                       'Death % Change'='death_percent_change'
                     )),
-        pickerInput('state', 'Select states (linechart only):', 
-                    choices = unique(levels(dat.change$state)), 
-                    options = list(`actions-box` = TRUE), 
-                    selected = unique(dat.change$state), multiple = T),
         sliderInput('innoculation', 'Innoculation Time (days) (linechart and heamap only):',
                     min = 1,max = 10, value = 5),
         materialSwitch('normalize', label = 'Normalize by state population?', status='primary'),
@@ -78,13 +74,13 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   reactive.states.input <- reactiveValues()
   reactive.pcp.dims <- reactiveValues()
-  
+
   # add list of states
   reactive.states.input$states <- unique(dat.change$state)
-  
+
   #--Chen--
   output$map <- renderPlotly({
-    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
+    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% filter(state %in% reactive.states.input$states)
     df$hover <- with(df, paste(Location, '<br>', Governor.Political.Affiliation, 'governor <br>', Region, '<br>', StateClosureStartDate))
     g <- list(
       scope = 'usa',
@@ -120,7 +116,7 @@ server <- function(input, output, session) {
                   color = ~Region,
                   # colors = c("blue", "red")
                   colors = 'viridis'
-                
+
                   )%>%
         layout(
           # title = 'Region',
@@ -132,21 +128,21 @@ server <- function(input, output, session) {
                   color = ~ClosureDateCat,
                   # colors = "Reds"
                   colors = 'viridis'
-                  
+
                   )%>%
         layout(
           title = 'School Closure Date',
           geo = g)
     }
   })
-  
+
   #--Dany--
   #DTH: no plot with only one state selected, RESOLVED taking away dropdown
   # a hack for linking to state selection - update accordingly!
   pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'ClosureDatCat', 'StateClosureStartDate')
   pcp.states <- unique(levels(dat.change$state))
   output$pcp <- renderPlotly({
-    
+
     df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
     if (input$normalize == TRUE) {
       df$total <- df$total / (df$POPESTIMATE2019/1e5)
@@ -161,7 +157,7 @@ server <- function(input, output, session) {
     region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
     closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
     closure.cat <-  c('Early', 'Middle', 'Late')
-    
+
     pcdat <- df %>%
       select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
       subset(!is.na(Governor.Political.Affiliation))
@@ -172,7 +168,7 @@ server <- function(input, output, session) {
     factor_cols <- sapply(pcdat, is.factor)
     pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
     pcdat <- pcdat[sort(pcdat$state, decreasing = T),]
-    
+
     #DTH: magma or  viridis
     #DTH can color = 'grey'
     dimensions = list(
@@ -264,7 +260,7 @@ server <- function(input, output, session) {
         ") %>%
       event_register('plotly_restyle')
   })
-  
+
   observeEvent(event_data('plotly_restyle', source = 'pcoords'), {
     d <- event_data("plotly_restyle", source = 'pcoords')
     # what is the relevant dimension (i.e. variable)?
@@ -319,8 +315,8 @@ server <- function(input, output, session) {
     }
     reactive.states.input$states <- unique(dat.init$state)
   })
-  
-  
+
+
   #--Kath--
   heatmapMatrix <- reactive({
     # obtain 30 timestamps after school closure (including school closure date)
@@ -346,7 +342,7 @@ server <- function(input, output, session) {
     rownames(mat) <- seq(1, heatmap.height)
     return(mat)
   })
-  
+
   output$heatmap <- renderPlotly({
     mat <- heatmapMatrix()
     states <- colnames(mat)
@@ -384,13 +380,13 @@ server <- function(input, output, session) {
         )) %>%
       add_segments(x=states[1], xend=states[length(states)], y=which(rows == 10), yend=which(rows == 10))
   })
-  
-  
+
+
   #--Jon--
   output$lineplot <- renderPlotly({
     #subset by states selected
-    dat_subset <- subset(dat.change, state %in% input$state & name %in% input$name & positive > 100)
-    
+    dat_subset <- subset(dat.change, state %in% reactive.states.input$states & name %in% input$name & positive > 100)
+
     # normalize
     if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
       dat.change$value <- dat.change$value / (dat_subset$POPESTIMATE2019/1e5)
@@ -400,7 +396,7 @@ server <- function(input, output, session) {
     else {
       y.label <- input$name
     }
-    
+
     #linear models
     dat_subset_before <- subset(dat_subset, value < Inf & !is.na(value) & date_diff <= input$innoculation)
     dat_subset_after <- subset(dat_subset, value < Inf & !is.na(value) & date_diff > input$innoculation)
@@ -414,15 +410,14 @@ server <- function(input, output, session) {
         #   # colorlist = c("darkgreen","gold", "darkred", "purple")
         #   colorlist = 'viridis'
         # }
-        
+
       }
       else {
         colorby <- 1
-        # colorlist = colorRampPalette(brewer.pal(8, "Dark2"))(length(input$state))
         colorlist = 'viridis'
       }
     }
-    
+
     # draw plot
     if(input$category == 'Governor.Political.Affiliation') {
     g <- ggplot(subset(dat.change, name %in% input$name & positive > 100)) +
@@ -436,8 +431,8 @@ server <- function(input, output, session) {
     g <- ggplot(subset(dat.change, name %in% input$name & positive > 100)) +
       geom_line(aes(x = date_diff, y=value, group = state), alpha = 0.1, size = 0.5, color = 'lightgrey') + theme_minimal() +
       geom_rect(xmin = 0, xmax=input$innoculation, ymin=-12000, ymax = 12000, size=0, fill = "lightblue", alpha = 0.5) +
-      # scale_color_manual(values = colorlist) + 
-      scale_colour_viridis_d() + 
+      # scale_color_manual(values = colorlist) +
+      scale_colour_viridis_d() +
       scale_y_log10() +
       labs(title = "Activity over time", x="Days from school closure", y = y.label)
     }
