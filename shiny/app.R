@@ -145,139 +145,58 @@ output$map <- renderPlotly({
 
         #DTH: magma or  viridis
         #DTH can color = 'grey'
+        dimensions = list(
+          list(range = c(1,length(df$state)),
+               tickvals = c(1:length(df$state)),
+               label = 'State',
+               ticktext = c(paste(state)),
+               values = ~state),
+          list(range = c(1,4),
+               tickvals = c(1:4),
+               label = 'Region',
+               ticktext = c(paste(region)),
+               values = ~Region,
+               ticks = 'outside'),
+          list(range=c(1,2),
+               tickvals = c(1:2),
+               label = 'Party',
+               ticktext = c(paste(party)),
+               values = ~Governor.Political.Affiliation),
+          list(range = c(~min(total),~max(total)),
+               label = 'Total Tests',
+               values= ~total),
+          list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
+               tickvals = c(1:3),
+               label = 'Time of Closure',
+               ticktext = c(paste(closure.cat)),
+               values = ~ClosureDateCat),
+          list(range = c(1,7),
+               label = 'School Closure Date',
+               tickvals = c(1:7),
+               ticktext = c(paste(closure)),
+               values = ~StateClosureStartDate,
+               ticks = 'outside'
+          )
+        )
         if (input$category == 'state'){
           pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
                       domain = list(x=c(0,2893), y=c(0,3)),
-                      dimensions = list(
-                        list(range = c(1,50),
-                             tickvals = c(1:50),
-                             label = 'State',
-                             ticktext = c(paste(state)),
-                             values = ~state),
-
-                        list(range = c(1,4),
-                             tickvals = c(1:4),
-                             label = 'Region',
-                             ticktext = c(paste(region)),
-                             values = ~Region,
-                             visible = TRUE,
-                             ticks = 'outside'),
-
-                        list(range=c(1,2),
-                             tickvals = c(1:2),
-                             label = 'Party',
-                             ticktext = c(paste(party)),
-                             values = ~Governor.Political.Affiliation,
-                             visible = TRUE),
-
-                        list(range = c(~min(total),~max(total)),
-                             label = 'Total Tests',
-                             values= ~total,
-                             visible = TRUE),
-
-
-                        list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
-                             tickvals = c(1:3),
-                             label = 'Time of Closure',
-                             ticktext = c(paste(closure.cat)),
-                             values = ~ClosureDateCat,
-                             visible = TRUE),
-
-                        list(range = c(1,7),
-                             label = 'School Closure Date',
-                             tickvals = c(1:7),
-                             ticktext = c(paste(closure)),
-                             values = ~StateClosureStartDate,
-                             visible = TRUE,
-                             ticks = 'outside'
-                        )
-
-                      )
+                      dimensions = dimensions
             ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
         else if(input$category == 'Region'){pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
-                      dimensions = list(
-                        list(range = c(1,length(df$state)),
-                             tickvals = c(1:length(df$state)),
-                             label = 'State',
-                             ticktext = c(paste(state)),
-                             values = ~state ),
-
-                        list(range = c(1,4),
-                             tickvals = c(1:4),
-                             label = 'Region',
-                             ticktext = c(paste(region)),
-                             values = ~Region ),
-
-                        list(range = c(~min(total),~max(total)),
-                             label = 'Total Tests',
-                             values= ~total),
-
-                        list(range=c(1,2),
-                             tickvals = c(1:2),
-                             label = 'Party',
-                             ticktext = c(paste(party)),
-                             values = ~Governor.Political.Affiliation ),
-
-                        list(range = c(1,7),
-                             label = 'School Closure Date',
-                             tickvals = c(1:7),
-                             ticktext = c(paste(closure)),
-                             values = ~StateClosureStartDate
-                        ),
-
-                        list(range = c(1,3),
-                             label = 'Time of Closure',
-                             tickvals = c(1:3),
-                             ticktext = c(paste(closure.cat)),
-                             values = ~ClosureDateCat)
-                      )
+                      dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
           }
         else if(input$category == 'ClosureDateCat') {
           pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
-                      dimensions = list(
-                        list(range = c(1,length(df$state)),
-                             tickvals = c(1:length(df$state)),
-                             label = 'State',
-                             ticktext = c(paste(state)),
-                             values = ~state ),
-
-                        list(range = c(1,4),
-                             tickvals = c(1:4),
-                             label = 'Region',
-                             ticktext = c(paste(region)),
-                             values = ~Region ),
-
-                        list(range = c(~min(total),~max(total)),
-                             label = 'Total Tests',
-                             values= ~total),
-
-                        list(range=c(1,2),
-                             tickvals = c(1:2),
-                             label = 'Party',
-                             ticktext = c(paste(party)),
-                             values = ~Governor.Political.Affiliation ),
-
-                        list(range = c(1,7),
-                             label = 'School Closure Date',
-                             tickvals = c(1:7),
-                             ticktext = c(paste(closure)),
-                             values = ~StateClosureStartDate
-                        ),
-
-                        list(range = c(1,3),
-                             label = 'Time of Closure',
-                             tickvals = c(1:3),
-                             ticktext = c(paste(closure.cat)),
-                             values = ~ClosureDateCat)
-                      )
+                      dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
         else if(input$category == 'Governor.Political.Affiliation'){
@@ -285,42 +204,7 @@ output$map <- renderPlotly({
           pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
-                      dimensions = list(
-                        list(range = c(1,length(df$state)),
-                             tickvals = c(1:length(df$state)),
-                             label = 'State',
-                             ticktext = c(paste(state)),
-                             values = ~state ),
-
-                        list(range = c(1,4),
-                             tickvals = c(1:4),
-                             label = 'Region',
-                             ticktext = c(paste(region)),
-                             values = ~Region ),
-
-                        list(range = c(~min(total),~max(total)),
-                             label = 'Total Tests',
-                             values= ~total),
-
-                        list(range=c(1,2),
-                             tickvals = c(1:2),
-                             label = 'Party',
-                             ticktext = c(paste(party)),
-                             values = ~Governor.Political.Affiliation ),
-
-                        list(range = c(1,7),
-                             label = 'School Closure Date',
-                             tickvals = c(1:7),
-                             ticktext = c(paste(closure)),
-                             values = ~StateClosureStartDate
-                        ),
-
-                        list(range = c(1,3),
-                             label = 'Time of Closure',
-                             tickvals = c(1:3),
-                             ticktext = c(paste(closure.cat)),
-                             values = ~ClosureDateCat)
-                      )
+                      dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
           }
 
