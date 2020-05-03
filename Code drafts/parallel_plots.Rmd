@@ -16,7 +16,6 @@ plotlyOutput('pcp')
 
 output$pcp <- renderPlotly({
         
- 
       pcdat<- dat[1:54,c(2,18,27, 29)] %>% subset(!is.na(dat[1:54,29]))
       party <-dat[1:54,29] %>% subset(!is.na(dat[,29])) %>%  unique() 
       col_names <- sapply(pcdat, is.factor)
