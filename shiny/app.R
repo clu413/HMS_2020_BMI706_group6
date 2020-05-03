@@ -3,8 +3,8 @@ library(htmlwidgets)
 library(plotly)
 library(tidyverse)
 library(lme4)
-library(shinyjs)
 library(RColorBrewer)
+library(htmlwidgets)
 
 #---load data---
 dat.change <- read_csv('../data/fixed_data_percent_change.csv')
@@ -148,18 +148,18 @@ output$map <- renderPlotly({
         dimensions = list(
           list(range = c(1,length(df$state)),
                tickvals = c(1:length(df$state)),
-               label = 'State',
+               label = 'States',
                ticktext = c(paste(state)),
                values = ~state),
           list(range = c(1,4),
                tickvals = c(1:4),
-               label = 'Region',
+               label = 'Regions',
                ticktext = c(paste(region)),
                values = ~Region,
                ticks = 'outside'),
           list(range=c(1,2),
                tickvals = c(1:2),
-               label = 'Party',
+               label = 'Governor Political Affiliations',
                ticktext = c(paste(party)),
                values = ~Governor.Political.Affiliation),
           list(range = c(~min(total),~max(total)),
@@ -171,7 +171,7 @@ output$map <- renderPlotly({
                ticktext = c(paste(closure.cat)),
                values = ~ClosureDateCat),
           list(range = c(1,7),
-               label = 'School Closure Date',
+               label = 'School Closure Dates',
                tickvals = c(1:7),
                ticktext = c(paste(closure)),
                values = ~StateClosureStartDate,
@@ -179,48 +179,60 @@ output$map <- renderPlotly({
           )
         )
         if (input$category == 'state'){
-          pcdat %>%
+          out <- pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
                       domain = list(x=c(0,2893), y=c(0,3)),
                       dimensions = dimensions
             ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
-        else if(input$category == 'Region'){pcdat %>%
-            plot_ly() %>%
+        else if(input$category == 'Region'){
+          out <- pcdat %>%
+            out <- plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
                       dimensions = dimensions
             )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
           }
         else if(input$category == 'ClosureDateCat') {
-          pcdat %>%
-            plot_ly() %>%
-            add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
-                      dimensions = dimensions
-            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+            out <- pcdat %>%
+              plot_ly() %>%
+              add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
+                        dimensions = dimensions
+              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
         }
         else if(input$category == 'Governor.Political.Affiliation'){
-
-          pcdat %>%
-            plot_ly() %>%
-            add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
-                      dimensions = dimensions
-            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+            out <- pcdat %>%
+              plot_ly() %>%
+              add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
+                        dimensions = dimensions
+              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+        }
+        out %>% onRender("
+          function(el) {
+              var dict = {
+                      'States': null,
+                      'Governor Political Affiliations': 'Governor.Political.Affiliation',
+                      'Regions': 'Region',
+                      'School Closure Dates': 'ClosureDateCat',
+                      'Total tests': 'total',
+                  };
+              // change hover css
+              $('.axis-title').hover(function() {
+                  self = $(this)
+                  if (dict[self.text()]) {
+                      self.css('cursor', 'pointer');
+                  }
+              });
+              $('.axis-title').click(function() {
+                  var text = $(this).text();
+                  if (dict[text]) {
+                      Shiny.onInputChange('category', dict[text]);
+                      $('.axis-title').css('fill', 'black');
+                      $(this).css('fill', 'red');
+                  }
+              });
           }
-
-
-
-        #DTH: disabled b/c for some reason does not work on my system
-        #%>% onRender("
-            # function(el) {
-            #     $('.axis-title').click(function() {
-            #         Shiny.onInputChange('name', 'percent_positive');
-            #         $(this).css('fill', 'red');
-            #     });
-            # }
-            #
-            # ")
-
+        ")
     })
 
     #--Kath--
