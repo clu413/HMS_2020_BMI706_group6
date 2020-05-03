@@ -1,0 +1,29 @@
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+covid_tracking_url_path <- 'https://covidtracking.com/api/v1/states/daily.csv'
+download.file(covid_tracking_url_path, destfile='covid_tracking_history.csv')
+dat <- read_csv("covid_tracking_history.csv")
+dat$date <- as.factor(dat$date)
+
+
+dat.group <- dat %>% group_by(date) %>% summarize(
+  # Tests=sum(Tota, na.rm=T),
+          TotalTestResults=sum(totalTestResults, na.rm=T),
+          TotalPositive=sum(positive, na.rm=T),
+          TotalNegative=sum(negative, na.rm=T),
+          TotalDeath=sum(death, na.rm=T))
+
+dat.group$date <- as.Date(dat.group$date, format = '%Y%m%d')
+
+ggplot(dat.group) + geom_line(aes(x=date, y=TotalTestResults, group=1, color='Total tests')) +
+  geom_line(aes(x=date, y=TotalPositive, group=1, color='Positive Results')) +
+  geom_line(aes(x=date, y=TotalNegative, group=1, color='Negative Results')) +
+  geom_line(aes(x=date, y=TotalDeath, group=1, color='Death')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cumulative number of tests, positive and negative results, and death daily') +
+  xlab('Date') + ylab('The number of patients') +
+  scale_x_date(date_breaks = "10 days")+
+  # scale_y_continuous(trans='log10')
+  labs(color='') 
