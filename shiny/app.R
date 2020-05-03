@@ -37,7 +37,7 @@ ui <- fluidPage(
                     'Positive % Change'='positive_percent_change',
                     '% Positive of Total'='percent_positive',
                     'Total New Tests' = 'totalTestResultsIncrease',
-                    'Total % change' = 'total_tests_percent_change',
+                    'Total Tests % change' = 'total_tests_percent_change',
                     'Death Increase'='deathIncrease',
                     'Death % Change'='death_percent_change'
                   )),
@@ -126,6 +126,13 @@ output$map <- renderPlotly({
     output$pcp <- renderPlotly({
 
         df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
+        if (input$normalize == TRUE) {
+          df$total <- df$total / (df$POPESTIMATE2019/1e5)
+          total.label <- "Total Tests per 100K"
+        }
+        else {
+          total.label <- "Total Tests"
+        }
         df <- df[sort(df$state, decreasing = T),] %>% filter(state %in% input$state)
         party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
         state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
@@ -160,11 +167,12 @@ output$map <- renderPlotly({
                ticks = 'outside'),
           list(range=c(1,2),
                tickvals = c(1:2),
-               label = 'Governor Political Affiliations',
+               label = 'Governor Political \nAffiliation',
                ticktext = c(paste(party)),
                values = ~Governor.Political.Affiliation),
           list(range = c(~min(total),~max(total)),
-               label = 'Total Tests',
+               label = total.label,
+               
                values= ~total),
           list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
                tickvals = c(1:3),
@@ -185,28 +193,28 @@ output$map <- renderPlotly({
             add_trace(type = 'parcoords', line = list(color = ~state, colorscale = 'Viridis'),
                       domain = list(x=c(0,2893), y=c(0,3)),
                       dimensions = dimensions
-            ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+            ) %>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By State")
         }
         else if(input$category == 'Region'){
           out <- pcdat %>%
             plot_ly() %>%
             add_trace(type = 'parcoords', line = list(color = ~Region, colorscale = 'Viridis'),
                       dimensions = dimensions
-            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+            )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Region")
           }
         else if(input$category == 'ClosureDateCat') {
             out <- pcdat %>%
               plot_ly() %>%
               add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
                         dimensions = dimensions
-              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Closure Date")
         }
         else if(input$category == 'Governor.Political.Affiliation'){
             out <- pcdat %>%
               plot_ly() %>%
               add_trace(type = 'parcoords', line = list(color = ~Governor.Political.Affiliation, colorscale = list(c(0,'red'), c(1,'blue'))),
                         dimensions = dimensions
-              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4))
+              )%>% layout(autosize = F, height = 500, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Governor Political Affiliation")
         }
         out %>% onRender("
           function(el) {
@@ -252,6 +260,9 @@ output$map <- renderPlotly({
             df <- df %>%
                 filter(date >= closure_date) %>%
                 arrange(date)
+            if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
+              df$value <- df$value / (df$POPESTIMATE2019/1e5)
+            }
             mat[,i] <- df$value[1:heatmap.height]
         }
         colnames(mat) <- states
@@ -263,9 +274,16 @@ output$map <- renderPlotly({
         mat <- heatmapMatrix()
         states <- colnames(mat)
         rows <- rownames(mat)
+        if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
+          hm.label <- paste(input$name, "\nper 100K")
+        }
+        else {
+          hm.label <- input$name
+        }
         plot_ly(
             y=rows,
             x=states,
+            colorbar = list(title = hm.label),
             z=mat, type='heatmap',
             width=700,
         ) %>%
@@ -328,8 +346,8 @@ output$map <- renderPlotly({
         # draw plot
         g <- ggplot(subset(dat.change, name %in% input$name & positive > 100)) +
           geom_line(aes(x = date_diff, y=value, group = state), alpha = 0.1, size = 0.5, color = 'lightgrey') + theme_minimal() +
-          geom_rect(xmin = 0, xmax=input$innoculation, ymin=0, ymax = 12000, size=0, fill = "lightblue", alpha = 0.5) +
-          scale_color_manual(values = colorlist) +
+          geom_rect(xmin = 0, xmax=input$innoculation, ymin=-12000, ymax = 12000, size=0, fill = "lightblue", alpha = 0.5) +
+          scale_color_manual(values = colorlist) + scale_y_log10() +
           labs(title = "Activity over time", x="Days from school closure", y = y.label)
         if (nrow(dat_subset)>0) {
           g <- g+ geom_line(data = dat_subset, alpha = 0.2, size=0.5, aes_string(x = 'date_diff', y='value', group = 'state', color = input$category))
