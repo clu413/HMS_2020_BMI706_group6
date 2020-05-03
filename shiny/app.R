@@ -30,11 +30,9 @@ ui <- fluidPage(
       selectInput('name', 'Select a value to display:',
                   c('Positive Increase'='positiveIncrease',
                     'Positive % Change'='positive_percent_change',
-                    '% Positive'='percent_positive',
+                    '% Positive of Total'='percent_positive',
                     'Total New Tests' = 'totalTestResultsIncrease',
                     'Total % change' = 'total_tests_percent_change',
-                    'Hospitalized Increase'='hospitalizedIncrease',
-                    'Hospitalized % Change'='hospitalized_percent_change',
                     'Death Increase'='deathIncrease',
                     'Death % Change'='death_percent_change'
                   )),
@@ -202,7 +200,7 @@ server <- function(input, output, session) {
         dat_subset <- subset(dat.change, state %in% input$state & name %in% input$name & positive > 100)
         
         # normalize
-        if (input$normalize == TRUE & input$category %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
+        if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
           dat.change$value <- dat.change$value / (dat_subset$POPESTIMATE2019/1e5)
           dat_subset$value <- dat_subset$value / (dat_subset$POPESTIMATE2019/1e5)
           y.label <- paste(input$name, "per 100K")
@@ -216,8 +214,6 @@ server <- function(input, output, session) {
         dat_subset_after <- subset(dat_subset, value < Inf & !is.na(value) & date_diff > input$innoculation)
         if (nrow(dat_subset) > 0) {
           if(input$category != 'state') {
-              dat_subset_before$fv <- dat_subset_before %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
-              dat_subset_after$fv <- dat_subset_after %>% lm(formula(paste("value ~ date_diff * ", input$category)), ., na.action = na.exclude) %>% fitted.values()
               colorby <- input$category
               if(input$category == 'Governor.Political.Affiliation') {
                 colorlist = c("blue", "red")
@@ -228,21 +224,12 @@ server <- function(input, output, session) {
               
           }
           else {
-              dat_subset_before$fv <- dat_subset_before %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
-              dat_subset_after$fv <- dat_subset_after %>% lm(value ~ date_diff, ., na.action = na.exclude) %>% fitted.values()
               colorby <- 1
               colorlist = colorRampPalette(brewer.pal(8, "Dark2"))(length(input$state))
           }
         }
         
         # draw plot
-        # subset(dat.change, name %in% input$name & positive > 100) %>% group_by(state) %>% plot_ly(x = ~date_diff, y=~value) %>%
-        #   add_lines(text=~state, alpha = 0.2, color = "lightgrey", showlegend=FALSE) %>%
-        #   add_fun(function(plot) {
-        #        plot %>% filter(state %in% input$state) %>%
-        #        add_lines(x = ~date_diff, y=~value, name = formula(paste0("~", input$category)), color=formula(paste0("~", input$category)), colors=colorlist, alpha = 1, inherit = FALSE)
-        # 
-        #    }) %>%
         g <- ggplot(subset(dat.change, name %in% input$name & positive > 100)) + 
           geom_line(aes(x = date_diff, y=value, group = state), alpha = 0.1, size = 0.5, color = 'lightgrey') + theme_minimal() +             
           geom_rect(xmin = 0, xmax=input$innoculation, ymin=0, ymax = 12000, size=0, fill = "lightblue", alpha = 0.5) +
@@ -265,54 +252,6 @@ server <- function(input, output, session) {
                           text = "Dashed rine represents linear models before and after policy implementation",
                           showarrow = FALSE) %>%
           add_annotations(x=input$innoculation/2, xref='x',y=1, yref='paper', xanchor='center', font=list(size=10), text="Innoculation \nperiod", showarrow=FALSE)
-          #shapes = list(type = "rect", fillcolor = "blue", line=list(color="blue"), opacity = 0.2,
-                     #                               x0=0, x1=input$innoculation, xref = 'x',
-                      #                              y0=0, y1= 1, yref='paper'))
-                                      # yaxis = list(title = y.label),
-                                      # margin = list(b=90),
-
-        # ggplotly(g) %>%
-        #   add_lines(data = dat_subset_before %>% group_by_at(input$category),
-        #             x = dat_subset_before$date_diff,
-        #             y = ~fv,
-        #             inherit = FALSE,
-        #             colors= colorlist2,
-        #             line=list(width = 4, dash = 'dash'),
-        #             name = "Trend Until Schools Closed", showlegend = FALSE) %>%
-        #   add_lines(data = dat_subset_after  %>% group_by_at(input$category),
-        #             x = dat_subset_after$date_diff,
-        #             y = ~fv,
-        #             inherit = FALSE,
-        #             colors=colorlist2,
-        #             line=list(width = 4, dash = 'dash'),
-        #             name = "Trend After Schools Closed", showlegend = FALSE)
-
-        # dat_subset %>% group_by(state) %>% plot_ly(x = ~date_diff, y=~value) %>%
-        #     add_lines(line=(list(width = 1, opacity = 0.6, color = 'lightgrey'))) %>%
-        #     add_trace(data = dat_subset_before,
-        #               x = dat_subset_before$date_diff,
-        #               y = ~fv,
-        #               type = 'scatter', mode = 'lines', color=colorby, inherit = FALSE,
-        #               line=list(width = 4, dash = 'dash', colors= colorlist),
-        #               name = "Trend Until Schools Closed", showlegend = FALSE) %>%
-        #     add_trace(data = dat_subset_after,
-        #               x = dat_subset_after$date_diff,
-        #               y = ~fv,
-        #               type = 'scatter', mode = 'lines', color=colorby, inherit = FALSE,
-        #               line=list(width = 4, dash = 'dash', colors=colorlist),
-        #               name = "Trend After Schools Closed", showlegend = FALSE) %>%
-
-        
-        
-
-    })
-    output$click <- renderPrint({
-      d<- event_data("plotly_relayout")
-      if (is.null(d) == T) return (NULL) else{
-        str(d)
-        #        updateSelectInput(session, 'state', selected = d)
-      }
-      
     })
 }
 
