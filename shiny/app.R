@@ -54,11 +54,12 @@ ui <- fluidPage(
       width = 12
     )),
     column(8, plotlyOutput('pcp'))),
-  
-  fluidRow(
-    # column(4, plotlyOutput('lineplot')),
-    column(6, plotlyOutput('map')),
-    column(6, plotlyOutput('lineplot'))
+    fluidRow(
+        column(6, plotlyOutput('map')),
+        column(6, tabsetPanel(
+           tabPanel('Line Chart', plotlyOutput('lineplot')),
+           tabPanel('Heatmap', plotlyOutput('heatmap'))
+        ))
     )
 )
 
@@ -129,8 +130,6 @@ server <- function(input, output) {
                                values = ~StateClosureStartDate
                           )
                       )
-                      
-                      
             ) %>% onRender("
             function(el) {
                 $('.axis-title').click(function() {
