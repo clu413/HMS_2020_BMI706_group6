@@ -44,12 +44,12 @@ ui <- fluidPage(
                     'Death Increase'='deathIncrease',
                     'Death % Change'='death_percent_change'
                   )),
-      selectInput('category', 'Color by:',
-                  c('None' = 'state',
-                    'Governor Political Affiliation'='Governor.Political.Affiliation',
-                    'Region'='Region',
-                    'Time of Closure'='ClosureDateCat'
-                  )),
+      # selectInput('category', 'Color by:',
+      #             c('None' = 'state',
+      #               'Governor Political Affiliation'='Governor.Political.Affiliation',
+      #               'Region'='Region',
+      #               'Time of Closure'='ClosureDateCat'
+      #             )),
       # pickerInput('state', 'Select states:',
       #             choices = unique(levels(dat.change$state)),
       #             options = list(`actions-box` = TRUE),
@@ -83,7 +83,7 @@ server <- function(input, output, session) {
 
     #--Chen--
 output$map <- renderPlotly({
-    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),]
+    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% filter(state %in% reactive.states.input$states)
     df$hover <- with(df, paste(state, '<br>',positive))
     g <- list(
       scope = 'usa',
