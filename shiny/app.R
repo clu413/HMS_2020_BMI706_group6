@@ -1,5 +1,6 @@
 library(shiny)
 library(htmlwidgets)
+library(shinyWidgets)
 library(plotly)
 library(tidyverse)
 library(lme4)
