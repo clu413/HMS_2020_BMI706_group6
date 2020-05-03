@@ -15,9 +15,9 @@ author: "Group 6: <br>Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe
 
 ### Visualizations of COVID-19 and Coronavirus-related Data: 
 
-First, we sought out other visualizations within public domains and from different outlets (including news sources, academic sources and blogs) in order to understand what aspects of COVID-19 data is already visualized. As expected, we found a lot of graphics focused on the epidemiologic aspects of the pandemic. When we found a graphic on the impact of the pandemic on flight departures we began thinking of other impacts of the virus that we could explore. We sought to identify if there was any information that was not visualized already that would help create a fuller story of the effects of the pandemic.
+First, we sought out other visualizations within public domains and from different outlets (including news sources, academic sources and blogs) in order to understand what aspects of COVID-19 data is already visualized. As expected, we found a lot of graphics focused on the epidemiological aspects of the pandemic. When we found a graphic on the impact of the pandemic on flight departures we began thinking of other impacts of the virus that we could explore. We sought to identify if there was any information that was not visualized already that would help create a fuller story of the effects of the pandemic.
 
-We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaluatorswho, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
+We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaluators who, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
 
 
 We expect to learn if the relationship exists and, if it does, to what extent the impact of these policies has on cases. We acknowledge that children are not as susceptible to COVID-19 as other risk groups and so there may not be a clear relationship between school closures and COVID-19 cases. Since this is an exploratory visual, we think that is valuable to create the visualization in order to let the data speak for itself.
@@ -49,6 +49,8 @@ The first six rows of our merged dataset appears as follows:
 
 
 ```{r, error = FALSE,  warning=FALSE, echo=FALSE, results = 'hide', include = FALSE}
+library(dplyr)
+library(ggplot2)
 
 dat.filt   <- read_csv('../data/filtered_data.csv')
 
@@ -190,33 +192,79 @@ The Parallel Coordinates Plot will be implemented first with the ability to clic
 
 The map will be implemented next. When hovering over the state, the total number of positive test results will appear.  
 
-By default, a line chart will be displayed next to the map showing the individual data and best fit line of the # of cases over time for each category (or the US as a whole). The line chart shows the number of cases by time centered by school closure date, such that the x-axis represents x number of days befoore and after school closure. A toggle button will be added, enabling the user to toggle between the line chart and a heatmap that indicates the case rate (i.e. % change in cases, or the derivative) over time.
+By default, a line chart will be displayed next to the map showing the individual data and best fit line of the # of cases over time for each category (or the US as a whole). The line chart shows the number of cases by time centered by school closure date, such that the x-axis represents x number of days before and after school closure. A toggle button will be added, enabling the user to toggle between the line chart and a heatmap that indicates the case rate (i.e. % change in cases, or the derivative) over time.
 
  
 #### Design Sheets
- TODO: Insert the screenshots of our slides
+
+Since we completed this process virtually, we adapted the design sheet process such that sheets 2,3 and 4 were done in parallel before meeting as a group to combine them for sheet 5. The design sheets are below in slide format. 
+
+Sheet 1 is zoomed in so that the font is not too small.
+
+```{r, echo = F}
+library(knitr)
+knitr::include_graphics(c("screenshots/S1-1.jpg", "screenshots/S1-2.jpg", "screenshots/S1-3.jpg"))
+
+```
+
+Sheet 1: Brain Storm (done collaboratively)
+
+<br><br>
+
+```{r, echo = F}
+knitr::include_graphics("screenshots/S2.jpg")
+```
+
+Sheet 2: Initial Design A (Jon)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S3.jpg")
+```
+
+Sheet 3: Initial Design B (Kathleen)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S4.jpg")
+```
+
+Sheet 4: Initial Design C (Chen)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S5.jpg")
+```
  
+Sheet 5: Realization Design (done collaboratively)
+
+<br><br>
+
 ### Team Member Contributions
 
-#### Chen
+<b>Chen</b>
+
 - Design sheet 1
 - Design sheet 4
 - RShiny app coding (map)
 - Presentation slides
 
-#### Jon
+<b>Jon</b>
+
 - Dataset description
 - Design sheet 1
 - Design sheet 2
 - RShiny app coding (line plot)
 
-#### Kathleen
+<b>Kathleen</b>
+
 - Dataset description 
 - Design sheet 1
 - Design sheet 3
-RShiny app coding (heatmap)
+- RShiny app coding (heatmap)
 
-#### Dany
+<b>Dany</b>
+
 - Design sheet 1
 - Design sheet 1 compilation
 - RShiny app coding (parallel coordinates plot)
@@ -228,4 +276,4 @@ RShiny app coding (heatmap)
 In the future, we would like to:
 
 - Visualize other policies in the same manner. Other policies include recommendations/mandates to wear a mask in public, group size limitations etc.
-- Define groups of school closure relative to occurance of the first case or any other case threshold
+- Define groups of school closure relative to occurrence of the first case or any other case threshold
