@@ -204,5 +204,6 @@ RShiny app coding (heatmap)
 ### Future Work
 In the future, we would like to:
 
+- Can extend data to when schools re-open and look at effects of re-opening on case loads and rates
 - Visualize other policies in the same manner. Other policies include recommendations/mandates to wear a mask in public, group size limitations etc.
 - Define groups of school closure relative to occurance of the first case or any other case threshold
