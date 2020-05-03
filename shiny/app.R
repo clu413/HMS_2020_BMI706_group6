@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(htmlwidgets)
 library(shinyWidgets)
 library(plotly)
@@ -38,16 +39,12 @@ ui <- fluidPage(
                     'Death Increase'='deathIncrease',
                     'Death % Change'='death_percent_change'
                   )),
-      selectInput('category', 'Color by:',
+      hidden(selectInput('category', 'Color by:',
                   c('None' = 'state',
                     'Governor Political Affiliation'='Governor.Political.Affiliation',
                     'Region'='Region',
                     'Time of Closure'='ClosureDateCat'
-                  )),
-      # pickerInput('state', 'Select states:',
-      #             choices = unique(levels(dat.change$state)),
-      #             options = list(`actions-box` = TRUE),
-      #             selected = unique(dat.change$state), multiple = T),
+                  ))),
       sliderInput('innoculation',
                   'Innoculation Time (days):',
                   min = 1,
@@ -219,7 +216,7 @@ output$map <- renderPlotly({
         }
         out %>% onRender("
           function(el) {
-            console.log(el);
+            $('.shinyjs-hide').css('display', 'none');
               var dict = {
                       'States': null,
                       'Governor Political Affiliations': 'Governor.Political.Affiliation',
@@ -252,7 +249,7 @@ output$map <- renderPlotly({
       # what is the relevant dimension (i.e. variable)?
       dimension <- as.numeric(stringr::str_extract(names(d[[1]]), "[0-9]+"))
       # If the restyle isn't related to a dimension, exit early.
-      if (!length(dimension)) return()
+      if (!length(dimension) | is.na(dimension)) return()
       # careful of the indexing in JS (0) versus R (1)!
       dimension_name <- pcp.dimensions[[dimension + 1]]
       # a given dimension can have multiple selected ranges
