@@ -240,7 +240,8 @@ output$map <- renderPlotly({
         # obtain 30 timestamps after school closure (including school closure date)
         heatmap.width <- 30
         cat <- input$name
-        states <- unique(dat.change$state)
+        orderby <- input$category
+        states <- unique(dat.filt[order(dat.filt[[orderby]]),]$state)
         mat <- matrix(rep(NA, length(states)*heatmap.width), nrow=length(states))
         for (i in 1:length(states)) {
             state <- states[i]
@@ -259,6 +260,7 @@ output$map <- renderPlotly({
 
     output$heatmap <- renderPlotly({
         mat <- heatmapMatrix()
+        states <- rownames(mat)
         plot_ly(
             y=rownames(mat),
             x=seq(1,30),
@@ -282,7 +284,7 @@ output$map <- renderPlotly({
                     showticklabels=T,
                     showgrid=T
                 )) %>%
-            add_segments(x=10, xend=10, y='AK', yend='WY')
+            add_segments(x=10, xend=10, y=states[1], yend=states[length(states)])
     })
 
     #--Jon--
