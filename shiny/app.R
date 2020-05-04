@@ -138,7 +138,7 @@ server <- function(input, output, session) {
   #--Dany--
   #DTH: no plot with only one state selected, RESOLVED taking away dropdown
   # a hack for linking to state selection - update accordingly!
-  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'total', 'ClosureDateCat', 'StateClosureStartDate')
+  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'total', 'ratio', 'ClosureDateCat', 'StateClosureStartDate')
   pcp.states <- unique(levels(dat.change$state))
   output$pcp <- renderPlotly({
 
@@ -270,6 +270,8 @@ server <- function(input, output, session) {
     closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
     closure.cat <-  c('Late', 'Middle', 'Early')
     dat.init <- dat.filt
+    dat.init$ratio <- dat.init$positive/dat.init$total
+    dat.init[which(dat.init$date < max(dat.init$date)), 'ratio'] <- 10000
     if (input$normalize) {
       dat.init$total <- dat.init$total / (dat.init$POPESTIMATE2019/1e5)
     }
@@ -282,11 +284,12 @@ server <- function(input, output, session) {
         else if (field == 'Governor.Political.Affiliation') { all_values <- party }
         else if (field == 'total') { all_values <- NA } # all values
         else if (field == 'ClosureDateCat') { all_values <- closure.cat }
+        else if (field == 'ratio') { all_values <- NA }
         else { all_values <- closure }
       } else {
         all_values <- c()
         for (range_i in seq_along(ranges)) {
-          if (field != 'total') {
+          if (field != 'total' & field != 'ratio') {
             range <- seq(ceiling(ranges[[range_i]][1]), floor(ranges[[range_i]][2]))
           } else {
             range <- c(ranges[[range_i]][1], ranges[[range_i]][2])
@@ -294,13 +297,13 @@ server <- function(input, output, session) {
           if (field == 'state') { values <- state[range] }
           else if (field == 'Region') { values <- region[range] }
           else if (field == 'Governor.Political.Affiliation') { values <- party[range] }
-          else if (field == 'total') { values <- range } # all values
+          else if (field == 'total' | field == 'ratio') { values <- range } # all values
           else if (field == 'ClosureDateCat') { values <- closure.cat[range] }
           else { values <- closure[range] }
           all_values <- c(all_values, values)
         }
       }
-      if (field != 'total') {
+      if (field != 'total' & field != 'ratio') {
         dat.init <- dat.init[as.character(dat.init[[field]]) %in% all_values,]
       } else {
         if (!is.na(all_values)) {
