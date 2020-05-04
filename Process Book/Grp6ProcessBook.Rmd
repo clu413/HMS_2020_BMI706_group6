@@ -203,7 +203,7 @@ With the data outlined above, one can create visualizations that illustrate :
 
 1.  Overview via parallel coordinate plots that display states' school closure date information, total tests performed, governor political party and region
 
-2.  Map that shows geographical relationships via map with ability to hover to reveal positive test results for each state
+2.  Map that shows geographical relationships via map with ability to hover to reveal state characteristics (i.e. governor political party and state-mandated school closure)
 
 3.  Detailed line plot and heatmap displaying selected entities (listed below) centered around school closure date and showing incubation periods
 
@@ -305,29 +305,48 @@ Sheet 5: Realization Design (done collaboratively)
 - Design sheet 4
 - RShiny app coding (map)
 - Presentation slides
+- Dataset merging
 
 <b>Jon</b>
 
+- Dataset identification
 - Dataset description
 - Design sheet 1
 - Design sheet 2
 - RShiny app coding (line plot)
+- Field experiment 'participant'
 
 <b>Kathleen</b>
 
 - Dataset description 
 - Design sheet 1
 - Design sheet 3
-- RShiny app coding (heatmap)
+- RShiny app coding (heatmap & linking)
+- Future Directions design sheet 1
 
 <b>Dany</b>
 
+- Dataset identification
 - Design sheet 1
 - Design sheet 1 compilation
 - RShiny app coding (parallel coordinates plot)
 - Process book
 
 ### Screenshots
+
+
+#### Biases of our visualization
+
+- Like all datasets reporting number of positives, this is somewhat reflective of total testing as well as true case load.
+
+- In the early stages of the pandemic, many interventions were implemented at once (school closings, travel plans, social distancing, stay-at-home orders), thus it is difficult to tease out which intervention has the greatest effect.
+
+- It is difficult to separate cause from effect. 
+
+- There may be some confounding factors that have yet to be identified.
+
+- Considering an incubation period: there is a delay in any effect from a policy.
+
 
 ### Future Work
 In the future, we would like to:
