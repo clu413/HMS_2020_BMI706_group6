@@ -20,7 +20,11 @@ First, we sought out other visualizations within public domains and from differe
 We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaluators who, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
 
 
-We expect to learn if the relationship exists and, if it does, to what extent the impact of these policies has on cases. We acknowledge that children are not as susceptible to COVID-19 as other risk groups and so there may not be a clear relationship between school closures and COVID-19 cases. Since this is an exploratory visual, we think that is valuable to create the visualization in order to let the data speak for itself.
+We want to inform policy makers and public in enforcing regulations. It is unclear of the transmissibility of coronavirus in children and, conversely it is unclear what the risk is for parents/family members of schoolchildren and their teachers. While school closings may mitigate spread of virus, there is a risk as well such as concerns for food-insecure students who rely on lunch programs and potentially unsafe conditions at home. Through this visualization, we aim to explore the data that could help illuminate whether or not 
+school closings are an essential part of future 
+mitigation efforts during repeat outbreaks and the effect of school closure on "the curve". 
+
+We expect to learn if there are common characteristics of states that close early vs. late and what the effect is of closing schools on "the curve". We will do this by exploring if there is a relationship between state-level school closing and COVID-19 caseload across states and comparing characteristics across different states. 
 
 
 ### Dataset & Key Statistics
@@ -93,6 +97,7 @@ ggplot(dat.filt) + geom_bar(aes(date)) + ggtitle('The number of rows for each da
    # coord_flip()
    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
 Figure 1: The number of rows recorded daily, where each row in each date corresponds to a state. We use data that has all state data for each day which starts from March 16 to the last time we pulled the data. 
 
 ```{r,  echo = FALSE, warning = FALSE}
@@ -101,6 +106,7 @@ ggplot(dat.filt[which(dat.filt$date==max(dat.filt$date)),]) + geom_bar(aes(State
    # coord_flip()
    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
 Figure 2: The number of states closing public schools for each date
 
 ```{r, warning = FALSE, echo = FALSE, message=FALSE, include = FALSE}
@@ -132,7 +138,58 @@ ggplot(dat.group) + geom_line(aes(x=date, y=TotalTestResults, group=1, color='To
   # scale_y_continuous(trans='log10')
   labs(color='') 
 ```
+
 Figure 3: The cumulative number of tests, positive and negative results, and death daily
+
+### Biases
+
+<b> State Historical Data in this COVID Tracking Project  </b>
+
+Data Source: statewide public health departments. https://covidtracking.com/data
+
+Sources of bias:
+
+- Selection bias introduced by access to tests: number of cases is partially a function of number of tests performed; due to the limited supplies and strict qualifications, there is a huge disparity in terms of who can get tests.
+
+- Due to the rapidly evolving nature of the pandemic, testing facilities were opened and utilized at different times. “As of 14 March 2020, public health laboratories using the CDC assay are no longer required by FDA to submit samples to CDC for confirmation. CDC is maintaining surge capacity while focusing on other support to state public health and on improving options for diagnostics for use in the public health”. Protocols across different testing facilities could vary, which introduces another form of bias, even within the same state. Note that in the case of Massachusetts, numbers included repeat testing between CDC confirmed cases and tests sent to US Public Health Labs.
+
+- Some states report numbers of people hospitalized, in ICU, and on ventilators whereas some do not, as state-level surveillance efforts on these metrics vary drastically. The COVID Tracking Project website strongly cautions against comparing these metrics between states. 
+
+<b> State-wide school closure enforcement date from Education Week </b>
+
+Data sources: Local news reporting; National Center for Education Statistics; school/district websites; government websites; clicking through suggests strong reliance on state-level announcements 
+
+Sources of bias:
+
+- Using state-wide data may not reflect earlier (potentially effective) actions taken at district levels
+
+- May not represent private schools who enacted closures more quietly. 
+
+- Does not reflect schools where parents pulled students prior to formal school closings, so there may be some trends at local levels attributable to those actions, prior to the formal state-level announcements.
+
+- Does not reflect that some school districts, such as Boston, delayed closure in order to continue providing food to their poorer students who depend on the school’s assistance via the free meal program.
+
+<b> State governor’s political parties from The Henry J. Kaiser Family Foundation</b> 
+
+Data source: National Governors Association as of January 3, 2019
+
+Sources of bias:
+
+- None since the data is static and objective barring emergencies that call for reelection of the state governor 
+
+<b> State population data (estimation for 2019) from the US Census Bureau </b>
+
+Data sources: Census Bureau estimations
+
+Sources of bias:
+
+- Base estimations based on different data sources
+
+- Estimates are typically based on an estimated population consistent with the most recent decennial census and are produced using the cohort-component method
+
+- Unclear exactly how the Census Bureau makes these estimations. May have hidden biases.
+If the census is not actually reflective of the population the estimates are not either.
+
 
 ### Visualizations
 With the data outlined above, one can create visualizations that illustrate :
@@ -276,8 +333,11 @@ Sheet 5: Realization Design (done collaboratively)
 In the future, we would like to:
 
 - Extend data as schools re-open to look at effects of school openings
+
 - Can extend data to when schools re-open and look at effects of re-opening on case loads and rates
+
 - Visualize other policies in the same manner. Other policies include recommendations/mandates to wear a mask in public, group size limitations etc.
+
 - Define groups of school closure relative to occurrence of the first case or any other case threshold
 
 ### References
