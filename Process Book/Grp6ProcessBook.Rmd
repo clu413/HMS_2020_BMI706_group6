@@ -18,7 +18,7 @@ output:
 
 First, we sought out other visualizations within public domains and from different outlets (including news sources, academic sources and blogs) in order to understand what aspects of COVID-19 data is already visualized. As expected, we found a lot of graphics focused on the epidemiological aspects of the pandemic. When we found a graphic on the impact of the pandemic on flight departures we began thinking of other impacts of the virus that we could explore. We sought to identify if there was any information that was not visualized already that would help create a fuller story of the effects of the pandemic.
 
-We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaluators who, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
+We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaporators who, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
 
 
 We want to inform policy makers and public in enforcing regulations. It is unclear of the transmissibility of coronavirus in children and, conversely it is unclear what the risk is for parents/family members of schoolchildren and their teachers. While school closings may mitigate spread of virus, there is a risk as well such as concerns for food-insecure students who rely on lunch programs and potentially unsafe conditions at home. Through this visualization, we aim to explore the data that could help illuminate whether or not 
@@ -335,25 +335,33 @@ Sheet 5: Realization Design (done collaboratively)
 - Process book
 
 ### Screenshots
-Overall layout of visualization
+
+<br>Screenshot 1: Overall layout of visualization
+
 ![Overall Screenshot](screenshots/706screenshotOverall.png)
   
-Side bar controls
+<br>Screenshot 2: Side bar controls
+
 ![Controls](screenshots/706screenshotControl.png)
   
-Parallel Coordinate Plot - Linkage by selecting Democratic States. Demonstrates that democratic states had higher case loads (see PC plot, % positive tests) but no difference in closing times compared to Republican states. 
+<br>Screenshot 3: Parallel Coordinate Plot - Linkage by selecting Democratic States. Demonstrates that democratic states had higher case loads (see PC plot, % positive tests) but no difference in closing times compared to Republican states. 
+
 ![Parallel Coordinate Plot - Linkage by selecting Democratic States](screenshots/706screenshotPoliticalParty.png)
   
-Parallel Coordinate Plot - Comparing Early vs Late Closures. Suggests no significant difference in state characteristics among closure time. 
+<br>Screenshot 4: Parallel Coordinate Plot - Comparing Early vs Late Closures. Suggests no significant difference in state characteristics among closure time. 
+
 ![Parallel Coordinate Plot - Comparing Early vs Late Closures](screenshots/706screenshotTimeofClosure.png)
   
-Map - showing range of timing of school closures by color
+<br>Screenshot 5: Map - showing range of timing of school closures by color
+
 ![Map](screenshots/706screenshotMap.png)
   
-Line graph of % change in new deaths, showing trend lines before and after school closure by political party. Suggests improved % change in new deaths after school closure in Democratic states (i.e. bending the curve) - however this could be because there was already a high case loads in those states (see above), as incubation period of 5 days is unlikely to reflect a change in deaths. 
+<br>Screenshot 6: Line graph of % change in new deaths, showing trend lines before and after school closure by political party. Suggests improved % change in new deaths after school closure in Democratic states (i.e. bending the curve) - however this could be because there was already a high case loads in those states (see above), as incubation period of 5 days is unlikely to reflect a change in deaths. 
+
 ![Line Graph](screenshots/706screenshotLineGraph.png)
   
-Heat map of % change in new positive cases by state, over time. Suggests improving % change in new cases after schools were closed (moving downward, below orange line on graphs).
+<br>Screenshot 7: Heat map of % change in new positive cases by state, over time. Suggests improving % change in new cases after schools were closed (moving downward, below orange line on graphs).
+
 ![Heat Map](screenshots/706screenshotHeatMap.png)
 
 

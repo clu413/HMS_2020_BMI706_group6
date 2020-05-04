@@ -1,0 +1,408 @@
+---
+title: "Group 6 Process Book"
+author: 'Group 6: <br>Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe Huerta '
+output:
+  html_document:
+    df_print: paged
+---
+<center> 
+# When did US states close their schools when the COVID pandemic hit?
+</center>
+<center>
+## Visualizing the impact of testing, school policy closing and leadership government party on COVID-19 cases 
+</center>
+
+
+
+### Visualizations of COVID-19 and Coronavirus-related Data: 
+
+First, we sought out other visualizations within public domains and from different outlets (including news sources, academic sources and blogs) in order to understand what aspects of COVID-19 data is already visualized. As expected, we found a lot of graphics focused on the epidemiological aspects of the pandemic. When we found a graphic on the impact of the pandemic on flight departures we began thinking of other impacts of the virus that we could explore. We sought to identify if there was any information that was not visualized already that would help create a fuller story of the effects of the pandemic.
+
+We decided to look at policy impacts on the amount of COVID-19 cases a community experiences. We were able to find clean datasets for testing measures and school closures so we sought to visualize it to see if there may be an underlying relationship between whether a proactive or reactive public school state mandated closure or the number of tests a state runs and the number of  COVID-19 cases within the state. A visualization is necessary in this case because otherwise it would be difficult to illuminate if a relationship exists. We create this visualization for policy makers and evaporators who, for instance, decides when to enact school closures and for how long and further evaluate its effectiveness for future considerations. Our visualizations could also be used by public health researchers and the general public.
+
+
+We want to inform policy makers and public in enforcing regulations. It is unclear of the transmissibility of coronavirus in children and, conversely it is unclear what the risk is for parents/family members of schoolchildren and their teachers. While school closings may mitigate spread of virus, there is a risk as well such as concerns for food-insecure students who rely on lunch programs and potentially unsafe conditions at home. Through this visualization, we aim to explore the data that could help illuminate whether or not 
+school closings are an essential part of future 
+mitigation efforts during repeat outbreaks and the effect of school closure on "the curve". 
+
+We expect to learn if there are common characteristics of states that close early vs. late and what the effect is of closing schools on "the curve". We will do this by exploring if there is a relationship between state-level school closing and COVID-19 caseload across states and comparing characteristics across different states. 
+
+
+### Dataset & Key Statistics
+
+We combined data from several datasets: 
+
+- State Historical Data in this COVID Tracking Project. Link: https://covidtracking.com/api
+
+This dataset contains daily updates from 56 states and territories on numbers of positive and negative COVID-19 tests and deaths from March 4 to current date (in total of 33 timepoints). Since 2020/03/16, every day 56 rows, each representing a US state or territory, are added to the existing dataset. 
+
+- State-wide school closure enforcement date from Education Week. Link: https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html 
+
+This dataset is published by EduWeek.com, and regards status over time of school closings by district and then by state. 
+
+- State governor’s political parties from The Henry J. Kaiser Family Foundation. Link: https://www.kff.org/other/state-indicator/state-political-parties/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D 
+
+This dataset is published by The Henry J. Kaiser Family Foundation and summarizes state-wide government for each US state.
+
+- State population data (estimation for 2019) from the US Census Bureau. Link https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/state/detail/ 
+
+This dataset is published by the US Census Bureau. It contains the estimation of population by state for the year of 2019.
+
+### Merged Dataset Summary:
+
+The first six rows of our merged dataset appears as follows:
+
+
+```{r, error = FALSE,  warning=FALSE, echo=FALSE, results = 'hide', include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(readr)
+
+dat.filt   <- read_csv('../data/filtered_data.csv')
+
+dat.change <- read_csv('../data/fixed_data_percent_change.csv')
+
+```
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+used <- c('state', 'date', 'positive', 'negative', 'total', 'death', 'Governor.Political.Affiliation', 'StateClosureStartDate', 'Region', 'POPESTIMATE2019', 'ClosureDateCat' )
+
+dat.filt %>% select(used) %>% head()
+```
+
+Our merged dataset has the following columns and attributes:
+
+        state [chr]: State abbreviation
+
+        date [date]: Date of the data collected
+
+        positive [numeric]: Number of total tests that resulted in positive results reported
+
+        negative [numeric]: Number of total tests that resulted in negative results reported
+
+        total [numeric]: Number of total conducted tests  reported
+
+        death [numeric]: Number of total deaths reported
+
+        Governor.Political.Affiliation[chr]: Party affiliation of the state governor
+
+        StateClosureStartDate [date]: Date state enforced public school closure
+
+        Region [chr]: The region of the US the state is located in
+
+        POPESTIMATE2019 [numeric]: The state's estimated population 
+
+        ClosureDateCat [chr]: The tertile the state's school closure date falls in. The first third of states to close are placed in the "Early" category, the next third in the "Middle" category and the last in the "Late". 
+
+```{r, warning = FALSE, echo=FALSE}
+ggplot(dat.filt) + geom_bar(aes(date)) + ggtitle('The number of rows for each date') + xlab('Date') + ylab('Count') +
+   # coord_flip()
+   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Figure 1: The number of rows recorded daily, where each row in each date corresponds to a state. We use data that has all state data for each day which starts from March 16 to the last time we pulled the data. 
+
+```{r,  echo = FALSE, warning = FALSE}
+
+ggplot(dat.filt[which(dat.filt$date==max(dat.filt$date)),]) + geom_bar(aes(StateClosureStartDate)) + ggtitle('School closings by date') + xlab('Date') + ylab('Count') +
+   # coord_flip()
+   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Figure 2: The number of states closing public schools for each date
+
+```{r, warning = FALSE, echo = FALSE, message=FALSE, include = FALSE}
+covid_tracking_url_path <- 'https://covidtracking.com/api/v1/states/daily.csv'
+download.file(covid_tracking_url_path, destfile='covid_tracking_history.csv')
+dat <- read_csv("covid_tracking_history.csv")
+dat$date <- as.factor(dat$date)
+```
+
+```{r, warning = FALSE, echo=FALSE, message=FALSE}
+
+dat.group <- dat %>% group_by(date) %>% summarize(
+  # Tests=sum(Tota, na.rm=T),
+          TotalTestResults=sum(totalTestResults, na.rm=T),
+          TotalPositive=sum(positive, na.rm=T),
+          TotalNegative=sum(negative, na.rm=T),
+          TotalDeath=sum(death, na.rm=T))
+
+dat.group$date <- as.Date(dat.group$date, format = '%Y%m%d')
+
+ggplot(dat.group) + geom_line(aes(x=date, y=TotalTestResults, group=1, color='Total tests')) +
+  geom_line(aes(x=date, y=TotalPositive, group=1, color='Positive Results')) +
+  geom_line(aes(x=date, y=TotalNegative, group=1, color='Negative Results')) +
+  geom_line(aes(x=date, y=TotalDeath, group=1, color='Death')) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ggtitle('The cumulative number of tests and deaths daily') +
+  xlab('Date') + ylab('The number of patients') +
+  scale_x_date(date_breaks = "10 days")+
+  # scale_y_continuous(trans='log10')
+  labs(color='') 
+```
+
+Figure 3: The cumulative number of tests, positive and negative results, and death daily
+
+### Biases
+
+<b> State Historical Data in this COVID Tracking Project  </b>
+
+Data Source: statewide public health departments. https://covidtracking.com/data
+
+Sources of bias:
+
+- Selection bias introduced by access to tests: number of cases is partially a function of number of tests performed; due to the limited supplies and strict qualifications, there is a huge disparity in terms of who can get tests.
+
+- Due to the rapidly evolving nature of the pandemic, testing facilities were opened and utilized at different times. “As of 14 March 2020, public health laboratories using the CDC assay are no longer required by FDA to submit samples to CDC for confirmation. CDC is maintaining surge capacity while focusing on other support to state public health and on improving options for diagnostics for use in the public health”. Protocols across different testing facilities could vary, which introduces another form of bias, even within the same state. Note that in the case of Massachusetts, numbers included repeat testing between CDC confirmed cases and tests sent to US Public Health Labs.
+
+- Some states report numbers of people hospitalized, in ICU, and on ventilators whereas some do not, as state-level surveillance efforts on these metrics vary drastically. The COVID Tracking Project website strongly cautions against comparing these metrics between states. 
+
+<b> State-wide school closure enforcement date from Education Week </b>
+
+Data sources: Local news reporting; National Center for Education Statistics; school/district websites; government websites; clicking through suggests strong reliance on state-level announcements 
+
+Sources of bias:
+
+- Using state-wide data may not reflect earlier (potentially effective) actions taken at district levels
+
+- May not represent private schools who enacted closures more quietly. 
+
+- Does not reflect schools where parents pulled students prior to formal school closings, so there may be some trends at local levels attributable to those actions, prior to the formal state-level announcements.
+
+- Does not reflect that some school districts, such as Boston, delayed closure in order to continue providing food to their poorer students who depend on the school’s assistance via the free meal program.
+
+<b> State governor’s political parties from The Henry J. Kaiser Family Foundation</b> 
+
+Data source: National Governors Association as of January 3, 2019
+
+Sources of bias:
+
+- None since the data is static and objective barring emergencies that call for reelection of the state governor 
+
+<b> State population data (estimation for 2019) from the US Census Bureau </b>
+
+Data sources: Census Bureau estimations
+
+Sources of bias:
+
+- Base estimations based on different data sources
+
+- Estimates are typically based on an estimated population consistent with the most recent decennial census and are produced using the cohort-component method
+
+- Unclear exactly how the Census Bureau makes these estimations. May have hidden biases.
+If the census is not actually reflective of the population the estimates are not either.
+
+
+### Visualizations
+With the data outlined above, one can create visualizations that illustrate :
+
+- overall positive case rate in the US centered around school closure date
+
+- state-by-state timing of school closures, testing availability, positive test rate, increasing cases rate and death rate
+
+
+<b> Visualization Tasks </b>
+
+1.  Overview via parallel coordinate plots that display states' school closure date information, total tests performed, governor political party and region
+
+2.  Map that shows geographical relationships via map with ability to hover to reveal state characteristics (i.e. governor political party and state-mandated school closure)
+
+3.  Detailed line plot and heatmap displaying selected entities (listed below) centered around school closure date and showing incubation periods
+
+
+- Interaction between all plots that allow users to refine their entity selection
+- Capacity to color information based on state (default), school closure date category, governor political party and region
+- Capacity to display on line plot an incubation period of users' choosing after school closure based on user input 
+- Ability for user to choose what information to display on heatmap and line graph (increase rate, change in or total of positive test results over time, and increase rate or change in deaths over time.)
+- Capacity to toggle between the line plot and heatmap
+
+### Five Design Sheet Methodology
+
+#### Visualization Challenges
+
+##### General
+- 50 states make for a lot of data points to display all at once. To give an overview in a way that someone can easily see a pattern in the data without it looking very busy is one of our challenges for our visualization.
+
+- We may find that there is small signal or no pattern in our visualization. 
+
+- Target audience (policymakers) must find visualization user-friendly.
+
+- We are limited by Plotly's abilities
+
+##### Heatmap
+- Difficult to compare rate of change between groupings (regions, political parties)
+
+##### Line plots
+- No “ordering” of the states
+- Difficult to display state names in a “clean” and organized way
+- Only displays one type of value (y-axis) at a time
+
+##### Parallel Coordinate Axis Plot
+- Likely will be difficult to follow one observation (a state’s line) across the different axes. How to find a way to  make it easier to follow.
+
+##### Map
+- Limited by packages that focus only on the 50 states. Unable to include the US territory data.
+
+
+#### Implementation Plan
+We will first merge the COVID tracking data and the school closure data by state; all missing values (i.e., the number of tests/cases) will be empty on the visualization (no imputation will be conducted). The only calculation we need to compute is the rate of change in cases, which will be calculated when the visualization loads. The visualization will be implemented in R, specifically using Shiny and Plotly.
+
+The Parallel Coordinates Plot will be implemented first with the ability to click on the category axis title to sort (and color) each state, including: governor political party, region, time of school closure (grouped as categorical).  We implement the parallel coordinate (PC) plot with at least five different axes: states, governor party, region, the closure date, and the current number of cases. Whenever the user selects a category on the dropdown list, both the region colors on the map and the line colors on the PC plot will be updated accordingly.
+
+The map will be implemented next. When hovering over the state, the total number of positive test results will appear.  
+
+By default, a line chart will be displayed next to the map showing the individual data and best fit line of the # of cases over time for each category (or the US as a whole). The line chart shows the number of cases by time centered by school closure date, such that the x-axis represents x number of days before and after school closure. A toggle button will be added, enabling the user to toggle between the line chart and a heatmap that indicates the case rate (i.e. % change in cases, or the derivative) over time.
+
+ 
+#### Design Sheets
+
+Since we completed this process virtually, we adapted the design sheet process such that sheets 2,3 and 4 were done in parallel before meeting as a group to combine them for sheet 5. The design sheets are below in slide format. 
+
+Sheet 1 is zoomed in so that the font is not too small.
+
+```{r, echo = F}
+library(knitr)
+knitr::include_graphics(c("screenshots/S1-1.jpg", "screenshots/S1-2.jpg", "screenshots/S1-3.jpg"))
+
+```
+
+Sheet 1: Brain Storm (done collaboratively)
+
+<br><br>
+
+```{r, echo = F}
+knitr::include_graphics("screenshots/S2.jpg")
+```
+
+Sheet 2: Initial Design A (Jon)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S3.jpg")
+```
+
+Sheet 3: Initial Design B (Kathleen)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S4.jpg")
+```
+
+Sheet 4: Initial Design C (Chen)
+
+<br><br>
+```{r, echo = F}
+knitr::include_graphics("screenshots/S5.jpg")
+```
+ 
+Sheet 5: Realization Design (done collaboratively)
+
+<br><br>
+
+### Team Member Contributions
+
+<b>Chen</b>
+
+- Design sheet 1
+- Design sheet 4
+- RShiny app coding (map)
+- Presentation slides
+- Dataset merging
+
+<b>Jon</b>
+
+- Dataset identification
+- Dataset description
+- Design sheet 1
+- Design sheet 2
+- RShiny app coding (line plot)
+- Field experiment 'participant'
+
+<b>Kathleen</b>
+
+- Dataset description 
+- Design sheet 1
+- Design sheet 3
+- RShiny app coding (heatmap & linking)
+- Future Directions design sheet 1
+
+<b>Dany</b>
+
+- Dataset identification
+- Design sheet 1
+- Design sheet 1 compilation
+- RShiny app coding (parallel coordinates plot)
+- Process book
+
+### Screenshots
+
+<br>Screenshot 1: Overall layout of visualization
+
+![Overall Screenshot](screenshots/706screenshotOverall.png)
+  
+<br>Screenshot 2: Side bar controls
+
+![Controls](screenshots/706screenshotControl.png)
+  
+<br>Screenshot 3: Parallel Coordinate Plot - Linkage by selecting Democratic States. Demonstrates that democratic states had higher case loads (see PC plot, % positive tests) but no difference in closing times compared to Republican states. 
+
+![Parallel Coordinate Plot - Linkage by selecting Democratic States](screenshots/706screenshotPoliticalParty.png)
+  
+<br>Screenshot 4: Parallel Coordinate Plot - Comparing Early vs Late Closures. Suggests no significant difference in state characteristics among closure time. 
+
+![Parallel Coordinate Plot - Comparing Early vs Late Closures](screenshots/706screenshotTimeofClosure.png)
+  
+<br>Screenshot 5: Map - showing range of timing of school closures by color
+
+![Map](screenshots/706screenshotMap.png)
+  
+<br>Screenshot 6: Line graph of % change in new deaths, showing trend lines before and after school closure by political party. Suggests improved % change in new deaths after school closure in Democratic states (i.e. bending the curve) - however this could be because there was already a high case loads in those states (see above), as incubation period of 5 days is unlikely to reflect a change in deaths. 
+
+![Line Graph](screenshots/706screenshotLineGraph.png)
+  
+<br>Screenshot 7: Heat map of % change in new positive cases by state, over time. Suggests improving % change in new cases after schools were closed (moving downward, below orange line on graphs).
+
+![Heat Map](screenshots/706screenshotHeatMap.png)
+
+
+#### Biases of our visualization
+
+- Like all datasets reporting number of positives, this is somewhat reflective of total testing as well as true case load.
+
+- In the early stages of the pandemic, many interventions were implemented at once (school closings, travel plans, social distancing, stay-at-home orders), thus it is difficult to tease out which intervention has the greatest effect.
+
+- It is difficult to separate cause from effect. 
+
+- There may be some confounding factors that have yet to be identified.
+
+- Considering an incubation period: there is a delay in any effect from a policy.
+
+
+### Future Work
+In the future, we would like to:
+
+- Extend data as schools re-open to look at effects of school openings
+
+- Can extend data to when schools re-open and look at effects of re-opening on case loads and rates
+
+- Visualize other policies in the same manner. Other policies include recommendations/mandates to wear a mask in public, group size limitations etc.
+
+- Define groups of school closure relative to occurrence of the first case or any other case threshold
+
+Below we show these ideas on a design sheet:
+
+```{r, echo = F, fig.cap="Future Directions Sheet 1" }
+library(knitr)
+knitr::include_graphics("screenshots/design sheet.png")
+
+```
+
+### References
+
+1. The COVID Tracking Project From The Atlantic. Historical state data, downloaded from https://covidtracking.com/api, April 28, 2020.
+
+2. Education Week. Coronavirus and School Closures: State Data, downloaded from https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html, April 7, 2020.
+
+3. The Henry J. Kaiser Family Foundation. State Political Parties, downloaded from  https://www.kff.org/other/state-indicator/state-political-parties/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D, April 26, 2020.
+
+4. United States Census Bureau. State population data (estimation for 2019), downloaded from https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/state/detail/, May 1, 2020.
