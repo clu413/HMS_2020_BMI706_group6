@@ -393,10 +393,10 @@ server <- function(input, output, session) {
     if (input$normalize == TRUE & input$name %in% c('positiveIncrease', 'totalTestResultsIncrease', 'hospitalizedIncrease', 'deathIncrease')) {
       dat.change$value <- dat.change$value / (dat_subset$POPESTIMATE2019/1e5)
       dat_subset$value <- dat_subset$value / (dat_subset$POPESTIMATE2019/1e5)
-      y.label <- paste(input$name, "per 100K")
+      y.label <- paste("log", input$name, "per 100K")
     }
     else {
-      y.label <- input$name
+      y.label <- paste("log", input$name)
     }
 
     #linear models

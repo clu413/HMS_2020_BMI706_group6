@@ -1,8 +1,9 @@
 ---
 title: "Group 6 Process Book"
-output: html_notebook
-author: "Group 6: <br>Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe Huerta "
-
+author: 'Group 6: <br>Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe Huerta '
+output:
+  html_document:
+    df_print: paged
 ---
 <center> 
 # When did US states close their schools when the COVID pandemic hit?
@@ -55,6 +56,7 @@ The first six rows of our merged dataset appears as follows:
 ```{r, error = FALSE,  warning=FALSE, echo=FALSE, results = 'hide', include = FALSE}
 library(dplyr)
 library(ggplot2)
+library(readr)
 
 dat.filt   <- read_csv('../data/filtered_data.csv')
 
@@ -333,6 +335,26 @@ Sheet 5: Realization Design (done collaboratively)
 - Process book
 
 ### Screenshots
+Overall layout of visualization
+![Overall Screenshot](screenshots/706screenshotOverall.png)
+  
+Side bar controls
+![Controls](screenshots/706screenshotControl.png)
+  
+Parallel Coordinate Plot - Linkage by selecting Democratic States
+![Parallel Coordinate Plot - Linkage by selecting Democratic States](screenshots/706screenshotPoliticalParty.png)
+  
+Parallel Coordinate Plot - Comparing Early vs Late Closures
+![Parallel Coordinate Plot - Comparing Early vs Late Closures](screenshots/706screenshotTimeofClosure.png)
+  
+Map - showing range of timing of school closures by color
+![Map](screenshots/706screenshotMap.png)
+  
+Line graph of % change in new deaths, showing trend lines before and after school closure by political party
+![Line Graph](screenshots/706screenshotLineGraph.png)
+  
+Heat map of % change in new positive cases by state, over time
+![Heat Map](screenshots/706screenshotHeatMap.png)
 
 
 #### Biases of our visualization
