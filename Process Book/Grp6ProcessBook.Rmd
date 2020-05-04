@@ -341,19 +341,19 @@ Overall layout of visualization
 Side bar controls
 ![Controls](screenshots/706screenshotControl.png)
   
-Parallel Coordinate Plot - Linkage by selecting Democratic States
+Parallel Coordinate Plot - Linkage by selecting Democratic States. Demonstrates that democratic states had higher case loads (see PC plot, % positive tests) but no difference in closing times compared to Republican states. 
 ![Parallel Coordinate Plot - Linkage by selecting Democratic States](screenshots/706screenshotPoliticalParty.png)
   
-Parallel Coordinate Plot - Comparing Early vs Late Closures
+Parallel Coordinate Plot - Comparing Early vs Late Closures. Suggests no significant difference in state characteristics among closure time. 
 ![Parallel Coordinate Plot - Comparing Early vs Late Closures](screenshots/706screenshotTimeofClosure.png)
   
 Map - showing range of timing of school closures by color
 ![Map](screenshots/706screenshotMap.png)
   
-Line graph of % change in new deaths, showing trend lines before and after school closure by political party
+Line graph of % change in new deaths, showing trend lines before and after school closure by political party. Suggests improved % change in new deaths after school closure in Democratic states (i.e. bending the curve) - however this could be because there was already a high case loads in those states (see above), as incubation period of 5 days is unlikely to reflect a change in deaths. 
 ![Line Graph](screenshots/706screenshotLineGraph.png)
   
-Heat map of % change in new positive cases by state, over time
+Heat map of % change in new positive cases by state, over time. Suggests improving % change in new cases after schools were closed (moving downward, below orange line on graphs).
 ![Heat Map](screenshots/706screenshotHeatMap.png)
 
 
