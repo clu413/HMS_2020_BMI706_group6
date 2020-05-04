@@ -138,7 +138,7 @@ server <- function(input, output, session) {
   #--Dany--
   #DTH: no plot with only one state selected, RESOLVED taking away dropdown
   # a hack for linking to state selection - update accordingly!
-  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'ClosureDatCat', 'StateClosureStartDate')
+  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'total', 'ClosureDateCat', 'StateClosureStartDate')
   pcp.states <- unique(levels(dat.change$state))
   output$pcp <- renderPlotly({
 
@@ -155,7 +155,7 @@ server <- function(input, output, session) {
     state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
     region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
     closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
-    closure.cat <-  c('Early', 'Middle', 'Late')
+    closure.cat <-  c('Late', 'Middle', 'Early')
 
     pcdat <- df %>%
       select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
@@ -163,7 +163,7 @@ server <- function(input, output, session) {
     pcdat$StateClosureStartDate <- factor(pcdat$StateClosureStartDate, levels = closure)
     pcdat$state <- factor(pcdat$state, levels = state)
     pcdat$Region <- factor(pcdat$Region, levels = region)
-    pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Early', 'Middle', 'Late'), ordered = T)
+    pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Late', 'Middle', 'Early'), ordered = T)
     factor_cols <- sapply(pcdat, is.factor)
     pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
     pcdat <- pcdat[sort(pcdat$state, decreasing = T),]
@@ -255,12 +255,20 @@ server <- function(input, output, session) {
         list(as.numeric(info))
       }
     }
+
+    df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
+    if (input$normalize == TRUE) {
+      df$total <- df$total / (df$POPESTIMATE2019/1e5)
+    }
     party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
     state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
     region <- unique(as.factor(dat.filt$Region)) %>% levels() %>% sort(decreasing = T)
     closure <- unique(as.factor(dat.filt$StateClosureStartDate)) %>% levels() %>% sort(decreasing = T)
-    closure.cat <-  c('Early', 'Middle', 'Late')
+    closure.cat <-  c('Late', 'Middle', 'Early')
     dat.init <- dat.filt
+    if (input$normalize) {
+      dat.init$total <- dat.init$total / (dat.init$POPESTIMATE2019/1e5)
+    }
     for (field in names(reactive.pcp.dims)) {
       ranges <- reactive.pcp.dims[[field]]
       if (is.na(ranges)) {
@@ -268,23 +276,37 @@ server <- function(input, output, session) {
         if (field == 'state') { all_values <- state }
         else if (field == 'Region') { all_values <- region}
         else if (field == 'Governor.Political.Affiliation') { all_values <- party }
-        else if (field == 'ClosureDatCat') { all_values <- closure.cat }
+        else if (field == 'total') { all_values <- NA } # all values
+        else if (field == 'ClosureDateCat') { all_values <- closure.cat }
         else { all_values <- closure }
       } else {
         all_values <- c()
         for (range_i in seq_along(ranges)) {
-          range <- seq(ceiling(ranges[[range_i]][1]), floor(ranges[[range_i]][2]))
-          values <- case_when(
-            field == 'state' ~ state[range],
-            field == 'Region' ~ region[range],
-            field == 'Governor.Political.Affiliation' ~ party[range],
-            field == 'ClosureDatCat' ~ closure.cat[range],
-            TRUE ~ closure[range] # state closure start date
-          )
+          if (field != 'total') {
+            range <- seq(ceiling(ranges[[range_i]][1]), floor(ranges[[range_i]][2]))
+          } else {
+            range <- c(ranges[[range_i]][1], ranges[[range_i]][2])
+          }
+          if (field == 'state') { values <- state[range] }
+          else if (field == 'Region') { values <- region[range] }
+          else if (field == 'Governor.Political.Affiliation') { values <- party[range] }
+          else if (field == 'total') { values <- range } # all values
+          else if (field == 'ClosureDateCat') { values <- closure.cat[range] }
+          else { values <- closure[range] }
           all_values <- c(all_values, values)
         }
       }
-      dat.init <- dat.init[dat.init[[field]] %in% all_values,]
+      if (field != 'total') {
+        dat.init <- dat.init[as.character(dat.init[[field]]) %in% all_values,]
+      } else {
+        if (!is.na(all_values)) {
+          for (i in 1:(length(all_values)/2)) {
+            idx <- 2*i - 1
+            dat.init <- dat.init[dat.init[[field]] >= range[idx] & dat.init[[field]] <= range[idx+1],]
+          }
+        }
+      }
+      
     }
     reactive.states.input$states <- unique(dat.init$state)
   })
