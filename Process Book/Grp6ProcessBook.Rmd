@@ -340,6 +340,14 @@ In the future, we would like to:
 
 - Define groups of school closure relative to occurrence of the first case or any other case threshold
 
+Below we show these ideas on a design sheet:
+
+```{r, echo = F, fig.cap="Future Directions Sheet 1" }
+library(knitr)
+knitr::include_graphics("screenshots/design sheet.png")
+
+```
+
 ### References
 
 1. The COVID Tracking Project From The Atlantic. Historical state data, downloaded from https://covidtracking.com/api, April 28, 2020.
