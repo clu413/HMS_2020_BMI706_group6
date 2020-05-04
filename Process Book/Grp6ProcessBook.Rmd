@@ -27,7 +27,7 @@ We expect to learn if the relationship exists and, if it does, to what extent th
 
 We combined data from several datasets: 
 
-- State Historical Data in this COVID Tracking Project. Link: https://covidtracking.com/api”
+- State Historical Data in this COVID Tracking Project. Link: https://covidtracking.com/api
 
 This dataset contains daily updates from 56 states and territories on numbers of positive and negative COVID-19 tests and deaths from March 4 to current date (in total of 33 timepoints). Since 2020/03/16, every day 56 rows, each representing a US state or territory, are added to the existing dataset. 
 
@@ -39,7 +39,7 @@ This dataset is published by EduWeek.com, and regards status over time of school
 
 This dataset is published by The Henry J. Kaiser Family Foundation and summarizes state-wide government for each US state.
 
-- State population data (estimation for 2019) from the US Census Bureau. Link Census.gov 
+- State population data (estimation for 2019) from the US Census Bureau. Link https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/state/detail/ 
 
 This dataset is published by the US Census Bureau. It contains the estimation of population by state for the year of 2019.
 
@@ -275,6 +275,17 @@ Sheet 5: Realization Design (done collaboratively)
 ### Future Work
 In the future, we would like to:
 
+- Extend data as schools re-open to look at effects of school openings
 - Can extend data to when schools re-open and look at effects of re-opening on case loads and rates
 - Visualize other policies in the same manner. Other policies include recommendations/mandates to wear a mask in public, group size limitations etc.
 - Define groups of school closure relative to occurrence of the first case or any other case threshold
+
+### References
+
+1. The COVID Tracking Project From The Atlantic. Historical state data, downloaded from https://covidtracking.com/api, April 28, 2020.
+
+2. Education Week. Coronavirus and School Closures: State Data, downloaded from https://www.edweek.org/ew/section/multimedia/map-coronavirus-and-school-closures.html, April 7, 2020.
+
+3. The Henry J. Kaiser Family Foundation. State Political Parties, downloaded from  https://www.kff.org/other/state-indicator/state-political-parties/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D, April 26, 2020.
+
+4. United States Census Bureau. State population data (estimation for 2019), downloaded from https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/state/detail/, May 1, 2020.

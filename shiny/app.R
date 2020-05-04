@@ -158,9 +158,10 @@ server <- function(input, output, session) {
     closure.cat <-  c('Early', 'Middle', 'Late')
 
     pcdat <- df %>%
-      select(state, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
+      select(state, positive, total, StateClosureStartDate, Governor.Political.Affiliation, Region, ClosureDateCat) %>%
       subset(!is.na(Governor.Political.Affiliation))
     pcdat$StateClosureStartDate <- factor(pcdat$StateClosureStartDate, levels = closure)
+    pcdat$ratio <- pcdat$positive/pcdat$total
     pcdat$state <- factor(pcdat$state, levels = state)
     pcdat$Region <- factor(pcdat$Region, levels = region)
     pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Early', 'Middle', 'Late'), ordered = T)
@@ -190,6 +191,9 @@ server <- function(input, output, session) {
       list(range = c(~min(total),~max(total)),
            label = total.label,
            values= ~total),
+      list(range = c(~min(ratio), ~max(ratio)),
+           label = 'Percentage of Positive Tests',
+           values = ~ratio),
       list(range = c(~min(ClosureDateCat),~max(ClosureDateCat)),
            tickvals = c(1:3),
            label = 'Time of Closure',
