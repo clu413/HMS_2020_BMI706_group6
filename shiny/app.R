@@ -138,18 +138,11 @@ server <- function(input, output, session) {
   #--Dany--
   #DTH: no plot with only one state selected, RESOLVED taking away dropdown
   # a hack for linking to state selection - update accordingly!
-  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'total', 'ratio', 'ClosureDateCat', 'StateClosureStartDate')
+  pcp.dimensions <- c('state', 'Region', 'Governor.Political.Affiliation', 'total', 'ratio', 'ClosureDateCat')
   pcp.states <- unique(levels(dat.change$state))
   output$pcp <- renderPlotly({
 
     df <- dat.filt[which(dat.filt$date==max(dat.filt$date)),] %>% as.data.frame()
-    if (input$normalize == TRUE) {
-      df$total <- df$total / (df$POPESTIMATE2019/1e5)
-      total.label <- "Total Tests per 100K"
-    }
-    else {
-      total.label <- "Total Tests"
-    }
     df <- df[sort(df$state, decreasing = T),]
     party <- unique(as.factor(dat.filt$Governor.Political.Affiliation)) %>% levels()
     state <- unique(as.factor(dat.filt$state)) %>% levels() %>% sort(decreasing = T)
@@ -165,6 +158,15 @@ server <- function(input, output, session) {
     pcdat$state <- factor(pcdat$state, levels = state)
     pcdat$Region <- factor(pcdat$Region, levels = region)
     pcdat$ClosureDateCat <- factor(pcdat$ClosureDateCat, levels = c('Late', 'Middle', 'Early'), ordered = T)
+    
+    if (input$normalize == TRUE) {
+      pcdat$total <- pcdat$total / (df$POPESTIMATE2019/1e5)
+      total.label <- "Total Tests per 100K"
+    }
+    else {
+      total.label <- "Total Tests"
+    }
+    
     factor_cols <- sapply(pcdat, is.factor)
     pcdat[, factor_cols] <- sapply(pcdat[, factor_cols], unclass)
     pcdat <- pcdat[sort(pcdat$state, decreasing = T),]
@@ -198,14 +200,14 @@ server <- function(input, output, session) {
            tickvals = c(1:3),
            label = 'Time of Closure',
            ticktext = c(paste(closure.cat)),
-           values = ~ClosureDateCat),
-      list(range = c(1,7),
-           label = 'School Closure Dates',
-           tickvals = c(1:7),
-           ticktext = c(paste(closure)),
-           values = ~StateClosureStartDate,
-           ticks = 'outside'
-      )
+           values = ~ClosureDateCat)#,
+      # list(range = c(1,7),
+      #      label = 'School Closure Dates',
+      #      tickvals = c(1:7),
+      #      ticktext = c(paste(closure)),
+      #      values = ~StateClosureStartDate,
+      #      ticks = 'outside'
+      #)
     )
     out <- pcdat %>% plot_ly(source='pcoords')
     if (input$category == 'state'){
@@ -224,7 +226,7 @@ server <- function(input, output, session) {
     }
     else if(input$category == 'ClosureDateCat') {
       out <- out %>%
-        add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis'),
+        add_trace(type = 'parcoords', line = list(color = ~ClosureDateCat, colorscale = 'Viridis', reversescale = TRUE),
                   dimensions = dimensions
         )%>% layout(autosize = F, height = 600, width = 2000, margin = list(l = 30, r = 150, b = 10, t = 10, pad = 4), title = "By Closure Date")
     }
