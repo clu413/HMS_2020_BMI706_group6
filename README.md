@@ -1,3 +1,7 @@
+Group members: Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe
+
+![](https://ibb.co/mJPN8dj)
+
 Notes on data:
 
 Currently the shiny app mainly loads:
