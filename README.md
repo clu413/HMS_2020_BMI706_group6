@@ -1,6 +1,6 @@
 Group members: Jonathan Levin, Chenyue Lu, Kathleen Sucipto,  Dany Thorpe
 
-![](https://ibb.co/mJPN8dj)
+![](https://user-images.githubusercontent.com/25008830/81129330-fa03f200-8f11-11ea-8e3f-71232c477174.jpeg)
 
 Notes on data:
 
